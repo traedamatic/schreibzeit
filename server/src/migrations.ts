@@ -80,7 +80,13 @@ CREATE INDEX idx_events_practiced_at ON practice_events(practiced_at);
 CREATE INDEX idx_sessions_subject ON auth_sessions(subject_type, subject_id);
 `;
 
-export const migrations: readonly Migration[] = [{ id: 1, name: 'init', up: INIT }];
+// Adds the optional free-text note on kids (used by Kids CRUD, #5).
+const KID_NOTIZ = `ALTER TABLE kids ADD COLUMN notiz TEXT;`;
+
+export const migrations: readonly Migration[] = [
+  { id: 1, name: 'init', up: INIT },
+  { id: 2, name: 'kid_notiz', up: KID_NOTIZ },
+];
 
 function userVersion(db: Database): number {
   const row = db.query('PRAGMA user_version;').get() as { user_version: number };

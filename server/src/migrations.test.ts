@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test';
 import { openDatabase } from './db';
-import { runMigrations } from './migrations';
+import { migrations, runMigrations } from './migrations';
 import { newId, now } from './ids';
+
+const LATEST_VERSION = migrations[migrations.length - 1]?.id ?? 0;
 
 function freshDb() {
   const db = openDatabase(':memory:');
@@ -32,8 +34,8 @@ describe('runMigrations', () => {
     const db = openDatabase(':memory:');
     const v1 = runMigrations(db);
     const v2 = runMigrations(db);
-    expect(v1).toBe(1);
-    expect(v2).toBe(1);
+    expect(v1).toBe(LATEST_VERSION);
+    expect(v2).toBe(LATEST_VERSION);
     db.close();
   });
 

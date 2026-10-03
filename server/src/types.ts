@@ -34,6 +34,7 @@ export interface KidRow {
   name: string;
   pin_hash: string | null;
   lernstand: Lernstand;
+  notiz: string | null;
   /** Daily practice time goal in seconds (default 300 = 5 min). */
   daily_goal_seconds: number;
   pin_failed_count: number;
