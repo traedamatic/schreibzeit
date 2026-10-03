@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Bun
+.bun/
+
+# Local SQLite databases (+ WAL/SHM sidecars)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Environment
+.env
+.env.local

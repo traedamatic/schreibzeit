@@ -1,0 +1,4 @@
+# Bun configuration for the Schreibzeit backend.
+# Tests live next to source as *.test.ts and run with `bun test`.
+[test]
+# Keep test runs deterministic; no preload needed yet.
