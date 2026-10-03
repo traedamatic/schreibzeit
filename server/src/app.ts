@@ -6,6 +6,7 @@ import type { Database } from 'bun:sqlite';
 import pkg from '../package.json';
 import { loadConfig, type Config } from './config';
 import { authRoutes } from './routes/auth';
+import { kidAuthRoutes } from './routes/kidAuth';
 
 /**
  * Build the API app around an open database connection.
@@ -16,5 +17,6 @@ export function createApp(db: Database, config: Config = loadConfig({})) {
   return new Elysia({ prefix: '/api' })
     .decorate('db', db)
     .get('/health', () => ({ status: 'ok' as const, version: pkg.version }))
-    .use(authRoutes(db, config));
+    .use(authRoutes(db, config))
+    .use(kidAuthRoutes(db, config));
 }
