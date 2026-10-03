@@ -8,6 +8,13 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
   /** Path to the SQLite database file (created if missing). */
   DB_PATH: z.string().min(1).default('schreibzeit.sqlite'),
+  /** Login session lifetime in seconds (default 30 days). */
+  SESSION_TTL_SECONDS: z.coerce.number().int().positive().default(60 * 60 * 24 * 30),
+  /** Set the `Secure` flag on session cookies (true in production/HTTPS). */
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
 });
 
 export type Config = z.infer<typeof EnvSchema>;
