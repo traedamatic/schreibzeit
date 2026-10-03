@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Add your pre-commit checks here
+# Example: npm run lint && npm run test
+
+exit 0
