@@ -70,6 +70,7 @@ validate-at-boundaries with Zod, security defense-in-depth, coverage floors). Ke
 
 - **Owner**: `traedamatic`
 - **Repository**: `schreibzeit`
+- **Base Branch**: `web-main`
 - **Project Number**: `7`
 - **Project URL**: https://github.com/users/traedamatic/projects/7
 - **Project ID**: `PVT_kwHOAAK5Cs4BllZh`
