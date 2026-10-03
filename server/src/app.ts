@@ -8,6 +8,7 @@ import { loadConfig, type Config } from './config';
 import { authRoutes } from './routes/auth';
 import { kidAuthRoutes } from './routes/kidAuth';
 import { kidsRoutes } from './routes/kids';
+import { wordsRoutes } from './routes/words';
 
 /**
  * Build the API app around an open database connection.
@@ -20,5 +21,6 @@ export function createApp(db: Database, config: Config = loadConfig({})) {
     .get('/health', () => ({ status: 'ok' as const, version: pkg.version }))
     .use(authRoutes(db, config))
     .use(kidAuthRoutes(db, config))
-    .use(kidsRoutes(db));
+    .use(kidsRoutes(db))
+    .use(wordsRoutes(db));
 }
