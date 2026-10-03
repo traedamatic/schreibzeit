@@ -15,6 +15,8 @@ const EnvSchema = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((v) => v === 'true'),
+  /** Family timezone for day boundaries (practice "today"/goal). */
+  TZ: z.string().min(1).default('Europe/Berlin'),
 });
 
 export type Config = z.infer<typeof EnvSchema>;

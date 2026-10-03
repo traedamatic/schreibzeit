@@ -42,3 +42,18 @@ export function kidContext(db: Database) {
 export function kidOwns(kid: KidRow | null, kidId: string): boolean {
   return kid !== null && kid.id === kidId;
 }
+
+/**
+ * Authorize access to a kid-scoped resource: allowed for any admin, or the
+ * owning kid. Returns 0 when allowed, else the HTTP status to respond with
+ * (401 = no session, 403 = wrong kid).
+ */
+export function accessDenial(
+  admin: AdminRow | null,
+  kid: KidRow | null,
+  kidId: string,
+): 0 | 401 | 403 {
+  if (admin) return 0;
+  if (!kid) return 401;
+  return kidOwns(kid, kidId) ? 0 : 403;
+}
