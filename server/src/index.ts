@@ -1,6 +1,7 @@
 // Entry point: load config (fail fast), open the database, start the server.
 import { loadConfig } from './config';
 import { openDatabase } from './db';
+import { runMigrations } from './migrations';
 import { createApp } from './app';
 
 function main(): void {
@@ -14,6 +15,7 @@ function main(): void {
   }
 
   const db = openDatabase(config.DB_PATH);
+  runMigrations(db);
   createApp(db).listen(config.PORT);
   console.log(`Schreibzeit API listening on http://localhost:${config.PORT}`);
 }
