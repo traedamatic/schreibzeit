@@ -172,6 +172,25 @@ export interface KnickblattConfig {
   thema?: string;
 }
 
+/**
+ * Outbox-Eintrag für den Server-Sync: ein offline (oder vor dem Server-Ack)
+ * getätigter Schreibvorgang, der beim nächsten Sync zum Familien-Server
+ * gespielt wird. Reihenfolge über `seq` (auto-increment).
+ */
+export type SyncOp =
+  | { typ: 'kind.create'; kind: Kind }
+  | { typ: 'kind.update'; kind: Kind }
+  | { typ: 'kind.delete'; id: Id }
+  | { typ: 'wort.create'; wort: Lernwort }
+  | { typ: 'wort.update'; id: Id; patch: Partial<Lernwort> }
+  | { typ: 'wort.delete'; ids: Id[] };
+
+export interface OutboxEintrag {
+  seq?: number;
+  op: SyncOp;
+  erstelltAm: number;
+}
+
 export interface Einstellungen {
   id: 'app';
   geminiApiKey: string;

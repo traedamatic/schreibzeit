@@ -7,6 +7,7 @@ import { UebungstextView } from './views/UebungstextView';
 import { WortkartenView } from './views/WortkartenView';
 import { EinstellungenModal } from './views/EinstellungenView';
 import { DatenschutzBanner } from './components/DatenschutzBanner';
+import { AdminAnmeldung, SyncStatusChip } from './components/ServerSync';
 import { Modal } from './components/ui';
 import {
   IconBook,
@@ -164,6 +165,9 @@ export default function App() {
             ) : (
               <h1 className="font-serif text-xl font-semibold text-ink">{t.app.name}</h1>
             )}
+            <div className="ml-auto">
+              <SyncStatusChip />
+            </div>
           </header>
 
           {kind && (
@@ -228,6 +232,7 @@ export default function App() {
         />
       </Modal>
 
+      <AdminAnmeldung />
       {!einstellungen.datenschutzBestaetigt && <DatenschutzBanner />}
     </>
   );

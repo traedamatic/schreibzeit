@@ -52,6 +52,22 @@ export const de = {
     keineDaten: 'Noch keine Daten vorhanden.',
     bestaetigen: 'Wirklich löschen?',
   },
+  sync: {
+    anmelden: 'Anmelden',
+    abmelden: 'Abmelden',
+    kontoErstellen: 'Erstes Konto erstellen',
+    zurAnmeldung: 'Zur Anmeldung',
+    email: 'E-Mail',
+    passwort: 'Passwort',
+    anzeigename: 'Anzeigename (optional)',
+    bannerTitel: 'Familien-Server',
+    bannerText:
+      'Diese App synchronisiert mit eurem Familien-Server. Bitte anmelden, damit beide Haushalte denselben Stand sehen.',
+    statusSynchron: 'Synchronisiert',
+    statusOffline: 'Offline – Änderungen werden nachgereicht',
+    statusAbgemeldet: 'Nicht angemeldet',
+    statusLaeuft: 'Synchronisiere …',
+  },
   datenschutz: {
     titel: 'Datenschutz',
     text: 'Alle Daten bleiben ausschließlich lokal auf diesem Gerät (im Browser). Es gibt keine Telemetrie und kein Tracking. Die einzigen externen Aufrufe sind die von Ihnen ausgelösten KI-Funktionen: Übungstexte (Google Gemini) und – falls genutzt – die Foto-Texterkennung (Gemini bzw. optional Claude Vision).',

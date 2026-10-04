@@ -36,6 +36,7 @@ function readDenial(admin: AdminRow | null, kid: KidRow | null, kidId: string): 
 }
 
 const WordBody = t.Object({
+  id: t.Optional(t.String({ minLength: 1, maxLength: 60 })),
   wort: t.String({ minLength: 1, maxLength: 120 }),
   artikel: t.Optional(t.String({ maxLength: 10 })),
   wortart: t.Optional(t.String({ maxLength: 40 })),
@@ -81,7 +82,13 @@ export function wordsRoutes(db: Database) {
           set.status = 400;
           return { error: 'Invalid artikel or status.' };
         }
+        // Idempotent offline-sync replay: a resent create with a known id is a no-op.
+        if (body.id) {
+          const existing = getWordById(db, body.id);
+          if (existing) return toPublicWord(existing);
+        }
         const word = createWord(db, params.id, {
+          id: body.id,
           wort: body.wort,
           artikel: body.artikel ?? null,
           wortart: body.wortart ?? null,

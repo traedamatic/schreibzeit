@@ -43,7 +43,13 @@ export function kidsRoutes(db: Database) {
           set.status = 400;
           return { error: goalError };
         }
+        // Idempotent offline-sync replay: a resent create with a known id is a no-op.
+        if (body.id) {
+          const existing = getKidById(db, body.id);
+          if (existing) return toPublicKid(existing);
+        }
         const kid = createKid(db, {
+          id: body.id,
           name: body.name,
           lernstand: body.lernstand,
           notiz: body.notiz ?? null,
@@ -55,6 +61,7 @@ export function kidsRoutes(db: Database) {
       },
       {
         body: t.Object({
+          id: t.Optional(t.String({ minLength: 1, maxLength: 60 })),
           name: t.String({ minLength: 1, maxLength: 120 }),
           lernstand: t.String(),
           notiz: t.Optional(t.String({ maxLength: 2000 })),

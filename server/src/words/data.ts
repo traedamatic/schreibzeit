@@ -5,6 +5,8 @@ import type { WordRow, WortStatus } from '../types';
 import { newId, now } from '../ids';
 
 export interface CreateWordInput {
+  /** Optional client-supplied id (offline-first sync replays stay idempotent). */
+  id?: string;
   wort: string;
   artikel?: string | null;
   wortart?: string | null;
@@ -38,7 +40,7 @@ export function getWordById(db: Database, id: string): WordRow | null {
 
 export function createWord(db: Database, kidId: string, input: CreateWordInput): WordRow {
   const ts = now();
-  const id = newId();
+  const id = input.id ?? newId();
   // Defaults match repository.addLernwort: status 'neu', fach 1, due now.
   db.query(
     `INSERT INTO words

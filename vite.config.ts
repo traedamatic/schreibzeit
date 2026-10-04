@@ -16,6 +16,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
+  // Dev-Proxy zum Familien-Server (server/): hält Frontend + API same-origin,
+  // damit die httpOnly-Session-Cookies ohne CORS funktionieren.
+  // Nutzung: VITE_API_URL=/api npm run dev  (Server: cd server && bun run dev)
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env.SCHREIBZEIT_API ?? 'http://localhost:3000',
+        changeOrigin: false,
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({

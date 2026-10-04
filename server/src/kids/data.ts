@@ -7,6 +7,8 @@ import { newId, now } from '../ids';
 export const DEFAULT_DAILY_GOAL_SECONDS = 300;
 
 export interface CreateKidInput {
+  /** Optional client-supplied id (offline-first sync replays stay idempotent). */
+  id?: string;
   name: string;
   lernstand: Lernstand;
   notiz?: string | null;
@@ -31,7 +33,7 @@ export function listKids(db: Database): KidRow[] {
 
 export function createKid(db: Database, input: CreateKidInput): KidRow {
   const ts = now();
-  const id = newId();
+  const id = input.id ?? newId();
   db.query(
     `INSERT INTO kids (id, admin_id, name, lernstand, daily_goal_seconds, notiz, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

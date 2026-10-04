@@ -6,6 +6,7 @@ import type {
   Kind,
   Klasse,
   Lernwort,
+  OutboxEintrag,
   Uebungstext,
   Wortliste,
 } from '@/types';
@@ -18,6 +19,7 @@ export class SchreibzeitDB extends Dexie {
   einstellungen!: Table<Einstellungen, string>;
   fonts!: Table<FontEintrag, string>;
   wortlisten!: Table<Wortliste, string>;
+  outbox!: Table<OutboxEintrag, number>;
 
   constructor() {
     super('schreibzeit');
@@ -35,6 +37,11 @@ export class SchreibzeitDB extends Dexie {
     // v3: selbst importierte Grundwortschatz-Listen.
     this.version(3).stores({
       wortlisten: 'id, label, erstelltAm',
+    });
+    // v4: Outbox für den Server-Sync (offline getätigte Schreibvorgänge,
+    // die bei nächster Gelegenheit zum Familien-Server gespielt werden).
+    this.version(4).stores({
+      outbox: '++seq',
     });
   }
 }
