@@ -18,9 +18,13 @@ export const LERNSTAND_VALUES: readonly Lernstand[] = [
 export const WORT_STATUS_VALUES: readonly WortStatus[] = ['neu', 'wird_geuebt', 'sitzt'];
 export const ARTIKEL_VALUES: readonly Artikel[] = ['der', 'die', 'das', ''];
 
-/** Übungsart eines Kindes (#15): alles üben oder nur Nomen (Großschreibung). */
-export type UebungsModus = 'alle' | 'nomen';
-export const UEBUNGS_MODUS_VALUES: readonly UebungsModus[] = ['alle', 'nomen'];
+/** Übungsart eines Kindes: alles üben, nur Nomen (#15) oder Groß/klein-Quiz (#16). */
+export type UebungsModus = 'alle' | 'nomen' | 'quiz';
+export const UEBUNGS_MODUS_VALUES: readonly UebungsModus[] = ['alle', 'nomen', 'quiz'];
+
+/** Art eines Practice-Events (#16): Schreibübung (SRS) oder Quiz (nur Zeit). */
+export type PracticeArt = 'schreiben' | 'quiz';
+export const PRACTICE_ART_VALUES: readonly PracticeArt[] = ['schreiben', 'quiz'];
 
 export interface FamilyRow {
   id: string;
@@ -87,6 +91,8 @@ export interface PracticeEventRow {
   /** 0 | 1. */
   correct: number;
   duration_ms: number;
+  /** 'schreiben' (SRS-wirksam) oder 'quiz' (nur Zeit/Statistik, #16). */
+  art: PracticeArt;
   fach_before: number | null;
   fach_after: number | null;
   practiced_at: number;

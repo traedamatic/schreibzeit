@@ -1,8 +1,8 @@
 // Reine Logik des Schüler-Übungsmodus: Zeitziel-Rechnung, aktive Stoppuhr
-// (pausierbar, z. B. wenn der Tab in den Hintergrund geht) und die
-// Offline-Warteschlange für noch nicht übertragene Übungs-Sessions.
-// Keine DOM-/React-Abhängigkeit — vollständig testbar.
-import type { UebungsEreignis } from '@/services/api';
+// (pausierbar, z. B. wenn der Tab in den Hintergrund geht), die
+// Offline-Warteschlange für noch nicht übertragene Übungs-Sessions und die
+// Quiz-Rundenlogik (#16). Keine DOM-/React-Abhängigkeit — vollständig testbar.
+import type { PracticeArt, UebungsEreignis } from '@/services/api';
 
 // ---------------------------------------------------------------------------
 // Zeitziel ("5 Minuten üben")
@@ -68,6 +68,8 @@ export interface WartendeSession {
   kindId: string;
   sessionId: string;
   events: UebungsEreignis[];
+  /** Art der Session (#16); fehlend = 'schreiben' (Abwärtskompatibilität). */
+  art?: PracticeArt;
 }
 
 const QUEUE_KEY = 'sz-ueben-warteschlange';
@@ -117,4 +119,54 @@ export async function wartendeAbspielen(
   const rest = liste.slice(index);
   wartendeSpeichern(rest, storage);
   return rest.length;
+}
+
+// ---------------------------------------------------------------------------
+// Groß/klein-Quiz (#16)
+// ---------------------------------------------------------------------------
+
+/** Minimale Wortsicht für die Quiz-Logik (ServerWort erfüllt das). */
+export interface QuizWort {
+  artikel: string | null;
+  wortart: string | null;
+}
+
+/** Nomen-Erkennung — identisch zur Server-Definition (#15). */
+export function istNomen(wort: QuizWort): boolean {
+  if (wort.artikel === 'der' || wort.artikel === 'die' || wort.artikel === 'das') return true;
+  return (wort.wortart ?? '').toLowerCase() === 'nomen';
+}
+
+/**
+ * Quiz-Runde zusammenstellen: möglichst ausgewogene Mischung aus Nomen und
+ * Nicht-Nomen aus der eigenen Kartei, gemischt, auf `max` begrenzt. Besteht
+ * die Kartei nur aus einer Gruppe, läuft das Quiz trotzdem (keine Balance
+ * erzwingbar). `zufall` ist injizierbar, damit Tests deterministisch sind.
+ */
+export function baueQuizRunde<T extends QuizWort>(
+  woerter: T[],
+  max = 20,
+  zufall: () => number = Math.random,
+): T[] {
+  const mischen = (liste: T[]): T[] => {
+    const kopie = [...liste];
+    for (let i = kopie.length - 1; i > 0; i--) {
+      const j = Math.floor(zufall() * (i + 1));
+      [kopie[i], kopie[j]] = [kopie[j] as T, kopie[i] as T];
+    }
+    return kopie;
+  };
+
+  const nomen = mischen(woerter.filter((w) => istNomen(w)));
+  const andere = mischen(woerter.filter((w) => !istNomen(w)));
+
+  // Abwechselnd aus beiden Gruppen ziehen (balanciert), dann final mischen.
+  const runde: T[] = [];
+  let i = 0;
+  while (runde.length < max && (i < nomen.length || i < andere.length)) {
+    if (i < nomen.length && runde.length < max) runde.push(nomen[i] as T);
+    if (i < andere.length && runde.length < max) runde.push(andere[i] as T);
+    i++;
+  }
+  return mischen(runde);
 }

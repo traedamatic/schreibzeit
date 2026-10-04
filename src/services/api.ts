@@ -9,8 +9,11 @@
 
 import type { Lernstand, WortStatus } from '@/types';
 
-/** Übungsart eines Kindes (#15): alles üben oder nur Nomen (Großschreibung). */
-export type UebungsModus = 'alle' | 'nomen';
+/** Übungsart eines Kindes: alles üben, nur Nomen (#15) oder Groß/klein-Quiz (#16). */
+export type UebungsModus = 'alle' | 'nomen' | 'quiz';
+
+/** Art einer Practice-Session (#16): Schreibübung (SRS) oder Quiz (nur Zeit). */
+export type PracticeArt = 'schreiben' | 'quiz';
 
 /** Server-Repräsentation eines Kindes (camelCase, vom Server geliefert). */
 export interface ServerKind {
@@ -222,6 +225,12 @@ export const uebenApi = {
   logout: () => request<{ ok: boolean }>('POST', '/auth/kid-logout', {}),
   faellig: (kindId: string) => request<ServerWort[]>('GET', `/kids/${kindId}/practice/due`),
   heute: (kindId: string) => request<HeuteStand>('GET', `/kids/${kindId}/practice/today`),
-  absenden: (kindId: string, sessionId: string, events: UebungsEreignis[]) =>
-    request<UebungsErgebnis>('POST', `/kids/${kindId}/practice`, { sessionId, events }),
+  /** Eigene Wörter des angemeldeten Kindes (für die Quiz-Runde, #16). */
+  woerter: (kindId: string) => request<ServerWort[]>('GET', `/kids/${kindId}/words`),
+  absenden: (
+    kindId: string,
+    sessionId: string,
+    events: UebungsEreignis[],
+    art: PracticeArt = 'schreiben',
+  ) => request<UebungsErgebnis>('POST', `/kids/${kindId}/practice`, { sessionId, events, art }),
 };

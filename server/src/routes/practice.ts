@@ -14,6 +14,7 @@ import {
 } from '../practice/data';
 import { startOfDayMs } from '../time';
 import { now } from '../ids';
+import { PRACTICE_ART_VALUES, type PracticeArt } from '../types';
 
 export function practiceRoutes(db: Database, config: Config) {
   return new Elysia()
@@ -27,6 +28,10 @@ export function practiceRoutes(db: Database, config: Config) {
           set.status = zugriff.status;
           return zugriffsFehler(zugriff.status);
         }
+        if (body.art !== undefined && !(PRACTICE_ART_VALUES as readonly string[]).includes(body.art)) {
+          set.status = 400;
+          return { error: 'Invalid art.' };
+        }
         try {
           const result = recordSession(
             db,
@@ -38,6 +43,7 @@ export function practiceRoutes(db: Database, config: Config) {
               durationMs: e.durationMs,
               practicedAt: e.practicedAt,
             })),
+            (body.art as PracticeArt | undefined) ?? 'schreiben',
           );
           return {
             applied: result.applied,
@@ -55,6 +61,7 @@ export function practiceRoutes(db: Database, config: Config) {
       {
         body: t.Object({
           sessionId: t.String({ minLength: 1, maxLength: 100 }),
+          art: t.Optional(t.String({ maxLength: 20 })),
           events: t.Array(
             t.Object({
               wordId: t.String({ minLength: 1 }),

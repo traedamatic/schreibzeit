@@ -108,11 +108,15 @@ CREATE INDEX idx_kids_family ON kids(family_id);
 // Übungsmodus pro Kind (#15): 'alle' (Standard) | 'nomen' (Großschreibung).
 const UEBUNGS_MODUS = `ALTER TABLE kids ADD COLUMN uebungs_modus TEXT NOT NULL DEFAULT 'alle';`;
 
+// Art des Practice-Events (#16): Schreibübung (SRS) vs. Groß/klein-Quiz.
+const EVENT_ART = `ALTER TABLE practice_events ADD COLUMN art TEXT NOT NULL DEFAULT 'schreiben';`;
+
 export const migrations: readonly Migration[] = [
   { id: 1, name: 'init', up: INIT },
   { id: 2, name: 'kid_notiz', up: KID_NOTIZ },
   { id: 3, name: 'families', up: FAMILIES },
   { id: 4, name: 'uebungs_modus', up: UEBUNGS_MODUS },
+  { id: 5, name: 'event_art', up: EVENT_ART },
 ];
 
 function userVersion(db: Database): number {

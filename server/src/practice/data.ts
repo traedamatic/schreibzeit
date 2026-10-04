@@ -2,7 +2,7 @@
 // records one practice_event per word attempt with its duration. Idempotent on
 // repeated (session_id, word_id) so offline-sync retries can't double-apply.
 import type { Database } from 'bun:sqlite';
-import type { UebungsModus, WordRow } from '../types';
+import type { PracticeArt, UebungsModus, WordRow } from '../types';
 import { getWordById } from '../words/data';
 import { naechsterStand } from '../srs';
 import { newId, now } from '../ids';
@@ -52,15 +52,20 @@ export function getDueWords(
 }
 
 /**
- * Record a practice run. Each event advances the word's SRS state and inserts a
- * practice_events row. A repeated (sessionId, wordId) is skipped (idempotent).
- * The whole run is one transaction; an invalid word reference rolls it back.
+ * Record a practice run. Each event inserts a practice_events row; repeated
+ * (sessionId, wordId) pairs are skipped (idempotent). The whole run is one
+ * transaction; an invalid word reference rolls it back.
+ *
+ * `art` (#16): bei 'schreiben' (Standard) wird zusätzlich der SRS-Stand des
+ * Worts fortgeschrieben; bei 'quiz' zählt nur Zeit + richtig/falsch —
+ * `fach`/`faellig_am`/`status` bleiben unverändert (fach_before = fach_after).
  */
 export function recordSession(
   db: Database,
   kidId: string,
   sessionId: string,
   events: PracticeEventInput[],
+  art: PracticeArt = 'schreiben',
 ): RecordResult {
   const updated: WordRow[] = [];
   let applied = 0;
@@ -79,11 +84,12 @@ export function recordSession(
         skipped += 1;
         continue;
       }
-      const next = naechsterStand(word.fach, ev.correct, ev.practicedAt);
+      const fachNachher =
+        art === 'quiz' ? word.fach : naechsterStand(word.fach, ev.correct, ev.practicedAt).fach;
       db.query(
         `INSERT INTO practice_events
-           (id, kid_id, word_id, session_id, correct, duration_ms, fach_before, fach_after, practiced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, kid_id, word_id, session_id, correct, duration_ms, art, fach_before, fach_after, practiced_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         newId(),
         kidId,
@@ -91,17 +97,17 @@ export function recordSession(
         sessionId,
         ev.correct ? 1 : 0,
         ev.durationMs,
+        art,
         word.fach,
-        next.fach,
+        fachNachher,
         ev.practicedAt,
       );
-      db.query('UPDATE words SET fach = ?, faellig_am = ?, status = ?, updated_at = ? WHERE id = ?;').run(
-        next.fach,
-        next.faelligAm,
-        next.status,
-        now(),
-        ev.wordId,
-      );
+      if (art === 'schreiben') {
+        const next = naechsterStand(word.fach, ev.correct, ev.practicedAt);
+        db.query(
+          'UPDATE words SET fach = ?, faellig_am = ?, status = ?, updated_at = ? WHERE id = ?;',
+        ).run(next.fach, next.faelligAm, next.status, now(), ev.wordId);
+      }
       applied += 1;
       const refreshed = getWordById(db, ev.wordId);
       if (refreshed) updated.push(refreshed);

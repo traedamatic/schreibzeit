@@ -14,13 +14,16 @@ import {
   istRemoteAktiv,
   uebenApi,
   type HeuteStand,
+  type PracticeArt,
   type ServerSchueler,
   type ServerWort,
   type UebungsEreignis,
 } from '@/services/api';
 import {
+  baueQuizRunde,
   erzeugeStoppuhr,
   formatZeit,
+  istNomen,
   istZeitUm,
   restSekunden,
   sessionAnhaengen,
@@ -49,7 +52,9 @@ interface RundenErgebnis {
 }
 
 async function wartendeNachreichen(): Promise<void> {
-  await wartendeAbspielen((s) => uebenApi.absenden(s.kindId, s.sessionId, s.events));
+  await wartendeAbspielen((s) =>
+    uebenApi.absenden(s.kindId, s.sessionId, s.events, s.art ?? 'schreiben'),
+  );
 }
 
 export function SchuelerApp() {
@@ -57,12 +62,16 @@ export function SchuelerApp() {
   const [profil, setProfil] = useState<ServerSchueler | null>(null);
   const [heute, setHeute] = useState<HeuteStand | null>(null);
   const [faellig, setFaellig] = useState<ServerWort[]>([]);
+  const [alleWoerter, setAlleWoerter] = useState<ServerWort[]>([]);
   const [ergebnis, setErgebnis] = useState<RundenErgebnis | null>(null);
 
   // Laufende Runde.
   const [runde, setRunde] = useState<ServerWort[]>([]);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('anschauen');
+  // Quiz-Zustand (#16): Frage- oder Feedback-Phase + letzte Antwort.
+  const [quizPhase, setQuizPhase] = useState<'frage' | 'feedback'>('frage');
+  const [quizKorrekt, setQuizKorrekt] = useState(false);
   const [, setTick] = useState(0); // erzwingt Re-Render für den Countdown
   const uhrRef = useRef<Stoppuhr | null>(null);
   const wortStartRef = useRef(0);
@@ -78,10 +87,16 @@ export function SchuelerApp() {
 
   async function ladeDaten(p: ServerSchueler): Promise<void> {
     await wartendeNachreichen().catch(() => {});
-    const [h, f] = await Promise.all([uebenApi.heute(p.id), uebenApi.faellig(p.id)]);
+    const [h, f, alle] = await Promise.all([
+      uebenApi.heute(p.id),
+      uebenApi.faellig(p.id),
+      // Das Quiz mischt Nomen und Nicht-Nomen aus der ganzen Kartei (#16).
+      p.uebungsModus === 'quiz' ? uebenApi.woerter(p.id) : Promise.resolve([] as ServerWort[]),
+    ]);
     setProfil(p);
     setHeute(h);
     setFaellig(f);
+    setAlleWoerter(alle);
     setModus('start');
   }
 
@@ -128,8 +143,11 @@ export function SchuelerApp() {
     };
   }, [modus]);
 
+  const istQuiz = profil?.uebungsModus === 'quiz';
+
   function starten(): void {
-    if (!heute || faellig.length === 0) return;
+    const neueRunde = istQuiz ? baueQuizRunde(alleWoerter) : faellig;
+    if (!heute || neueRunde.length === 0) return;
     uhrRef.current = erzeugeStoppuhr();
     uhrRef.current.start();
     wortStartRef.current = 0;
@@ -138,9 +156,10 @@ export function SchuelerApp() {
     bonusRundeRef.current = heute.goalMet;
     beendetRef.current = false;
     zielRef.current = { zielSekunden: heute.goalSeconds, sekundenHeute: heute.secondsToday };
-    setRunde(faellig);
+    setRunde(neueRunde);
     setIndex(0);
     setPhase('anschauen');
+    setQuizPhase('frage');
     setModus('ueben');
   }
 
@@ -149,11 +168,16 @@ export function SchuelerApp() {
     beendetRef.current = true;
     uhrRef.current?.pause();
     setModus('sendet');
-    const session = { kindId: profil.id, sessionId: newId(), events: eventsRef.current };
+    const session = {
+      kindId: profil.id,
+      sessionId: newId(),
+      events: eventsRef.current,
+      art: (istQuiz ? 'quiz' : 'schreiben') as PracticeArt,
+    };
     let uebertragung: RundenErgebnis['uebertragung'] = 'ok';
     try {
       if (session.events.length > 0) {
-        await uebenApi.absenden(session.kindId, session.sessionId, session.events);
+        await uebenApi.absenden(session.kindId, session.sessionId, session.events, session.art);
       }
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
@@ -177,10 +201,11 @@ export function SchuelerApp() {
   // Immer die aktuelle Instanz bereithalten (für den Interval-Callback).
   beendenRef.current = () => void beenden();
 
-  function bewerten(korrekt: boolean): void {
+  /** Antwort auf ein Wort verbuchen + Runden-Ende prüfen (gemeinsamer Kern). */
+  function antwortVerbuchen(korrekt: boolean): { fertig: boolean } {
     const wort = runde[index];
     const uhr = uhrRef.current;
-    if (!wort || !uhr || !heute) return;
+    if (!wort || !uhr || !heute) return { fertig: true };
     const aktiveMs = uhr.aktiveMs();
     eventsRef.current.push({
       wordId: wort.id,
@@ -190,16 +215,40 @@ export function SchuelerApp() {
     });
     if (korrekt) zaehlerRef.current.richtig += 1;
     else zaehlerRef.current.zuUeben += 1;
+    return { fertig: false };
+  }
 
+  /** Nächstes Wort — oder Runde beenden (Zeitziel/Wörter erschöpft). */
+  function weiterOderBeenden(): void {
+    const uhr = uhrRef.current;
+    if (!uhr || !heute) return;
     const naechster = index + 1;
-    const zielErreicht = istZeitUm(heute.goalSeconds, heute.secondsToday, aktiveMs);
+    const zielErreicht =
+      !bonusRundeRef.current && istZeitUm(heute.goalSeconds, heute.secondsToday, uhr.aktiveMs());
     if (zielErreicht || naechster >= runde.length) {
       void beenden();
       return;
     }
-    wortStartRef.current = aktiveMs;
+    wortStartRef.current = uhr.aktiveMs();
     setIndex(naechster);
     setPhase('anschauen');
+    setQuizPhase('frage');
+  }
+
+  /** Quiz (#16): „Groß oder klein?" beantworten → Feedback zeigen. */
+  function quizBeantworten(antwortGross: boolean): void {
+    const wort = runde[index];
+    if (!wort) return;
+    const korrekt = antwortGross === istNomen(wort);
+    const { fertig } = antwortVerbuchen(korrekt);
+    if (fertig) return;
+    setQuizKorrekt(korrekt);
+    setQuizPhase('feedback');
+  }
+
+  function bewerten(korrekt: boolean): void {
+    const { fertig } = antwortVerbuchen(korrekt);
+    if (!fertig) weiterOderBeenden();
   }
 
   const aktuelleRestSekunden =
@@ -236,12 +285,12 @@ export function SchuelerApp() {
         {modus === 'start' && heute && (
           <Startkarte
             heute={heute}
-            faellig={faellig.length}
-            nurNomen={profil?.uebungsModus === 'nomen'}
+            anzahl={istQuiz ? Math.min(alleWoerter.length, 20) : faellig.length}
+            uebungsModus={profil?.uebungsModus ?? 'alle'}
             onStart={starten}
           />
         )}
-        {modus === 'ueben' && runde[index] && heute && (
+        {modus === 'ueben' && runde[index] && heute && !istQuiz && (
           <Uebungskarte
             wort={runde[index] as ServerWort}
             position={index + 1}
@@ -253,6 +302,19 @@ export function SchuelerApp() {
             onAbdecken={() => setPhase('schreiben')}
             onAufdecken={() => setPhase('pruefen')}
             onBewerten={bewerten}
+          />
+        )}
+        {modus === 'ueben' && runde[index] && heute && istQuiz && (
+          <QuizKarte
+            wort={runde[index] as ServerWort}
+            position={index + 1}
+            gesamt={runde.length}
+            restSekunden={aktuelleRestSekunden}
+            bonus={bonusRundeRef.current}
+            phase={quizPhase}
+            korrekt={quizKorrekt}
+            onAntwort={quizBeantworten}
+            onWeiter={weiterOderBeenden}
           />
         )}
         {modus === 'sendet' && <Hinweiskarte symbol="📨" titel="Speichere deine Übung …" />}
@@ -342,25 +404,31 @@ function Anmeldekarte({ onAngemeldet }: { onAngemeldet: (p: ServerSchueler) => P
 
 function Startkarte({
   heute,
-  faellig,
-  nurNomen,
+  anzahl,
+  uebungsModus,
   onStart,
 }: {
   heute: HeuteStand;
-  faellig: number;
-  nurNomen: boolean;
+  anzahl: number;
+  uebungsModus: string;
   onStart: () => void;
 }) {
   const rest = Math.max(0, heute.goalSeconds - heute.secondsToday);
+  const istQuiz = uebungsModus === 'quiz';
   return (
     <div className="card p-6 text-center sm:p-8">
-      <p className="text-5xl">{heute.goalMet ? '🌟' : '📚'}</p>
+      <p className="text-5xl">{heute.goalMet ? '🌟' : istQuiz ? '🎲' : '📚'}</p>
       <h2 className="mt-3 font-serif text-xl font-semibold text-ink">
         {heute.goalMet ? 'Ziel für heute geschafft!' : 'Deine Schreibzeit'}
       </h2>
-      {nurNomen && (
+      {uebungsModus === 'nomen' && (
         <p className="mt-2 inline-block rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-600">
           🔠 Großschreibung üben — heute nur Nomen
+        </p>
+      )}
+      {istQuiz && (
+        <p className="mt-2 inline-block rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-600">
+          🎲 Groß-oder-klein-Quiz
         </p>
       )}
       <div className="mt-4 flex justify-center gap-6 text-sm text-ink-soft">
@@ -373,18 +441,20 @@ function Startkarte({
           noch bis zum Ziel
         </span>
         <span>
-          <span className="block text-2xl font-semibold text-accent-600">{faellig}</span>
-          Wörter dran
+          <span className="block text-2xl font-semibold text-accent-600">{anzahl}</span>
+          {istQuiz ? 'Quiz-Wörter' : 'Wörter dran'}
         </span>
       </div>
 
-      {faellig > 0 ? (
+      {anzahl > 0 ? (
         <button className="btn-primary mt-6 w-full py-3 text-base" onClick={onStart}>
-          ▶ Üben starten
+          {istQuiz ? '▶ Quiz starten' : '▶ Üben starten'}
         </button>
       ) : (
         <p className="mt-6 text-sm text-ink-soft">
-          Gerade ist kein Wort fällig — komm später wieder. 🎉
+          {istQuiz
+            ? 'Noch keine Wörter in deiner Kartei — frag deine Eltern. 🙂'
+            : 'Gerade ist kein Wort fällig — komm später wieder. 🎉'}
         </p>
       )}
 
@@ -493,6 +563,92 @@ function Uebungskarte({
               ✓ Richtig
             </button>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Groß/klein-Quiz (#16): Wort kleingeschrieben zeigen, Kind entscheidet. */
+function QuizKarte({
+  wort,
+  position,
+  gesamt,
+  restSekunden,
+  bonus,
+  phase,
+  korrekt,
+  onAntwort,
+  onWeiter,
+}: {
+  wort: ServerWort;
+  position: number;
+  gesamt: number;
+  restSekunden: number;
+  bonus: boolean;
+  phase: 'frage' | 'feedback';
+  korrekt: boolean;
+  onAntwort: (gross: boolean) => void;
+  onWeiter: () => void;
+}) {
+  const nomen = istNomen(wort);
+  const richtigeSchreibung = nomen
+    ? `${wort.artikel ? `${wort.artikel} ` : ''}${wort.wort}`
+    : wort.wort.toLocaleLowerCase('de');
+  return (
+    <div className="card p-6 sm:p-8">
+      <div className="flex items-center justify-between text-xs text-ink-faint">
+        <span>
+          Wort {position} von {gesamt}
+        </span>
+        {bonus ? (
+          <span className="font-semibold text-accent-600" aria-label="Bonusrunde">
+            ✓ Ziel geschafft
+          </span>
+        ) : (
+          <span className="font-semibold text-brand-600" aria-label="Verbleibende Übungszeit">
+            ⏱ {formatZeit(restSekunden)}
+          </span>
+        )}
+        <span aria-hidden>🎲</span>
+      </div>
+
+      <div className="mt-4 flex min-h-[160px] items-center justify-center rounded-xl2 border border-paper-200 bg-paper-50 px-3 py-8">
+        {phase === 'frage' ? (
+          <p className="font-serif text-5xl text-ink">{wort.wort.toLocaleLowerCase('de')}</p>
+        ) : (
+          <div className="text-center">
+            <p className="text-4xl">{korrekt ? '✅' : '❌'}</p>
+            <p className="mt-2 font-serif text-4xl text-ink">{richtigeSchreibung}</p>
+            <p className="mt-2 text-sm text-ink-soft">
+              {nomen ? 'Ein Nomen — wird großgeschrieben.' : 'Kein Nomen — bleibt klein.'}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <p className="mt-4 text-center text-sm text-ink-soft">
+        {phase === 'frage'
+          ? 'Schreibt man dieses Wort groß oder klein?'
+          : korrekt
+            ? 'Richtig — super!'
+            : 'Merk es dir für das nächste Mal.'}
+      </p>
+
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        {phase === 'frage' ? (
+          <>
+            <button className="btn-primary flex-1 py-3 text-base" onClick={() => onAntwort(true)}>
+              🔠 Groß
+            </button>
+            <button className="btn-secondary flex-1 py-3 text-base" onClick={() => onAntwort(false)}>
+              🔡 klein
+            </button>
+          </>
+        ) : (
+          <button className="btn-primary w-full py-3 text-base" onClick={onWeiter}>
+            Weiter
+          </button>
         )}
       </div>
     </div>

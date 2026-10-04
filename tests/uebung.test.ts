@@ -2,13 +2,16 @@
 // und die Offline-Warteschlange für noch nicht übertragene Sessions.
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  baueQuizRunde,
   erzeugeStoppuhr,
   formatZeit,
+  istNomen,
   istZeitUm,
   restSekunden,
   sessionAnhaengen,
   wartendeAbspielen,
   wartendeLaden,
+  type QuizWort,
   type WartendeSession,
 } from '@/schueler/uebung';
 
@@ -103,5 +106,48 @@ describe('Offline-Warteschlange', () => {
   it('übersteht kaputten Speicherinhalt', () => {
     localStorage.setItem('sz-ueben-warteschlange', '{kein json');
     expect(wartendeLaden()).toEqual([]);
+  });
+});
+
+describe('Groß/klein-Quiz (#16)', () => {
+  const nomen = (name: string): QuizWort & { name: string } => ({
+    name,
+    artikel: 'der',
+    wortart: null,
+  });
+  const verb = (name: string): QuizWort & { name: string } => ({
+    name,
+    artikel: null,
+    wortart: null,
+  });
+
+  it('istNomen erkennt Artikel und wortart', () => {
+    expect(istNomen({ artikel: 'die', wortart: null })).toBe(true);
+    expect(istNomen({ artikel: null, wortart: 'Nomen' })).toBe(true);
+    expect(istNomen({ artikel: '', wortart: 'Verb' })).toBe(false);
+    expect(istNomen({ artikel: null, wortart: null })).toBe(false);
+  });
+
+  it('mischt Nomen und Nicht-Nomen ausgewogen und begrenzt auf max', () => {
+    const woerter = [
+      ...Array.from({ length: 10 }, (_, i) => nomen(`N${i}`)),
+      ...Array.from({ length: 10 }, (_, i) => verb(`V${i}`)),
+    ];
+    const runde = baueQuizRunde(woerter, 6, () => 0.5);
+    expect(runde).toHaveLength(6);
+    const nomenAnzahl = runde.filter((w) => istNomen(w)).length;
+    expect(nomenAnzahl).toBe(3); // ausgewogen bei genug Material
+  });
+
+  it('läuft auch mit nur einer Gruppe (reine Nomen-Kartei)', () => {
+    const runde = baueQuizRunde([nomen('A'), nomen('B')], 20, () => 0.5);
+    expect(runde).toHaveLength(2);
+  });
+
+  it('ist mit injiziertem Zufall deterministisch', () => {
+    const woerter = [nomen('A'), verb('b'), nomen('C'), verb('d')];
+    const a = baueQuizRunde(woerter, 4, () => 0.1).map((w) => w.name);
+    const b = baueQuizRunde(woerter, 4, () => 0.1).map((w) => w.name);
+    expect(a).toEqual(b);
   });
 });

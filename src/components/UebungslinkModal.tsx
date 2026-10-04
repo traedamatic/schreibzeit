@@ -14,6 +14,7 @@ import type { Einstellungen, Kind, Lernwort } from '@/types';
 const MODUS_OPTIONEN: { wert: UebungsModus; label: string }[] = [
   { wert: 'alle', label: 'Alle Wörter' },
   { wert: 'nomen', label: 'Nur Nomen (Großschreibung)' },
+  { wert: 'quiz', label: 'Groß/klein-Quiz' },
 ];
 
 export function UebungslinkModal({
@@ -160,6 +161,12 @@ export function UebungslinkModal({
           {modus === 'nomen' && (
             <p className="mt-1 text-xs text-ink-faint">
               Das Kind übt nur Nomen — Merksatz „Nomen schreibt man groß!" wird angezeigt.
+            </p>
+          )}
+          {modus === 'quiz' && (
+            <p className="mt-1 text-xs text-ink-faint">
+              „Groß oder klein?"-Quiz über die ganze Kartei. Die Zeit zählt zum Tagesziel; der
+              Karteikasten-Fortschritt (Fächer) bleibt unberührt.
             </p>
           )}
         </div>
