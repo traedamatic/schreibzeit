@@ -18,7 +18,11 @@ import { formatSyllables } from '@/core/syllables';
 import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
 import { uebernehmeWort, uebernehmeWoerter } from '@/services/lernwortHelfer';
 import { erkenneTextAusFoto } from '@/services/ocr';
-import { GRUNDWORTSCHATZ_LISTEN, ladeGrundwortschatz } from '@/data/grundwortschatz';
+import {
+  GRUNDWORTSCHATZ_LISTEN,
+  ladeGrundwortschatz,
+  type GrundwortschatzEintrag,
+} from '@/data/grundwortschatz';
 import { IconCamera, IconList, IconBook } from '@/components/icons';
 import { WortChips } from '@/components/WortChips';
 import { PrintPortal } from '@/components/print/PrintPortal';
@@ -833,11 +837,11 @@ function GrundwortschatzBody({
   const [listeId, setListeId] = useState(
     () => einstellungen.grundwortschatzId || GRUNDWORTSCHATZ_LISTEN[0].id,
   );
-  const [woerter, setWoerter] = useState<string[]>([]);
+  const [eintraege, setEintraege] = useState<GrundwortschatzEintrag[]>([]);
   const [hinzugefuegt, setHinzugefuegt] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (listeId) void ladeGrundwortschatz(listeId).then(setWoerter);
+    if (listeId) void ladeGrundwortschatz(listeId).then(setEintraege);
   }, [listeId]);
 
   const existierende = useMemo(
@@ -847,24 +851,30 @@ function GrundwortschatzBody({
 
   const offene = useMemo(
     () =>
-      woerter.filter((w) => {
-        const n = normalizeForCompare(w);
+      eintraege.filter((e) => {
+        const n = normalizeForCompare(e.wort);
         return !existierende.has(n) && !hinzugefuegt.has(n);
       }),
-    [woerter, existierende, hinzugefuegt],
+    [eintraege, existierende, hinzugefuegt],
   );
 
-  async function uebernehmen(w: string) {
-    await uebernehmeWort(kind.id, w, 'Grundwortschatz');
-    setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(w)));
+  const eintragProWort = useMemo(() => new Map(eintraege.map((e) => [e.wort, e])), [eintraege]);
+
+  // Kuratierter Listen-Artikel (#14) überschreibt beim Import den
+  // Wörterbuch-Vorschlag (null = bewusst ohne Artikel).
+  async function uebernehmen(e: GrundwortschatzEintrag) {
+    await uebernehmeWort(kind.id, e.wort, 'Grundwortschatz', e.artikel);
+    setHinzugefuegt((alt) => new Set(alt).add(normalizeForCompare(e.wort)));
   }
 
   async function alleUebernehmen() {
     const liste = offene;
-    await uebernehmeWoerter(kind.id, liste, 'Grundwortschatz');
+    for (const e of liste) {
+      await uebernehmeWort(kind.id, e.wort, 'Grundwortschatz', e.artikel);
+    }
     setHinzugefuegt((alt) => {
       const s = new Set(alt);
-      liste.forEach((w) => s.add(normalizeForCompare(w)));
+      liste.forEach((e) => s.add(normalizeForCompare(e.wort)));
       return s;
     });
   }
@@ -901,16 +911,18 @@ function GrundwortschatzBody({
           )}
         </div>
         <p className="text-sm text-ink-soft">
-          {woerter.length} Wörter · bereits in der Kartei vorhandene sind markiert.
+          {eintraege.length} Wörter · bereits in der Kartei vorhandene sind markiert.
         </p>
         <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-paper-200 bg-paper-50 p-3">
           <WortChips
-            items={woerter.map((w) => ({ wort: w, key: w }))}
+            items={eintraege.map((e) => ({ wort: e.wort, key: e.wort }))}
             istVorhanden={(w) => {
               const n = normalizeForCompare(w);
               return existierende.has(n) || hinzugefuegt.has(n);
             }}
-            onAdd={uebernehmen}
+            onAdd={(w) => {
+              void uebernehmen(eintragProWort.get(w) ?? { wort: w });
+            }}
           />
         </div>
       </div>

@@ -1,0 +1,2398 @@
+[
+  {
+    "word": "ab",
+    "article": null
+  },
+  {
+    "word": "acht",
+    "article": null
+  },
+  {
+    "word": "also",
+    "article": null
+  },
+  {
+    "word": "alt",
+    "article": null
+  },
+  {
+    "word": "Ampel",
+    "article": "die"
+  },
+  {
+    "word": "Antwort",
+    "article": "die"
+  },
+  {
+    "word": "Apfel",
+    "article": "der"
+  },
+  {
+    "word": "April",
+    "article": "der"
+  },
+  {
+    "word": "arbeiten",
+    "article": null
+  },
+  {
+    "word": "Arm",
+    "article": "der"
+  },
+  {
+    "word": "Ast",
+    "article": "der"
+  },
+  {
+    "word": "Aufgabe",
+    "article": "die"
+  },
+  {
+    "word": "aufwachen",
+    "article": null
+  },
+  {
+    "word": "Auge",
+    "article": "das"
+  },
+  {
+    "word": "August",
+    "article": "der"
+  },
+  {
+    "word": "Auto",
+    "article": "das"
+  },
+  {
+    "word": "Baby",
+    "article": "das"
+  },
+  {
+    "word": "baden",
+    "article": null
+  },
+  {
+    "word": "Ball",
+    "article": "der"
+  },
+  {
+    "word": "Bank",
+    "article": "die"
+  },
+  {
+    "word": "Bauch",
+    "article": "der"
+  },
+  {
+    "word": "bauen",
+    "article": null
+  },
+  {
+    "word": "Baum",
+    "article": "der"
+  },
+  {
+    "word": "Bein",
+    "article": "das"
+  },
+  {
+    "word": "Berg",
+    "article": "der"
+  },
+  {
+    "word": "Biene",
+    "article": "die"
+  },
+  {
+    "word": "Bild",
+    "article": "das"
+  },
+  {
+    "word": "bin",
+    "article": null
+  },
+  {
+    "word": "Birne",
+    "article": "die"
+  },
+  {
+    "word": "Blatt",
+    "article": "das"
+  },
+  {
+    "word": "blau",
+    "article": null
+  },
+  {
+    "word": "bleiben",
+    "article": null
+  },
+  {
+    "word": "blühen",
+    "article": null
+  },
+  {
+    "word": "Blume",
+    "article": "die"
+  },
+  {
+    "word": "Blüte",
+    "article": "die"
+  },
+  {
+    "word": "Boden",
+    "article": "der"
+  },
+  {
+    "word": "braun",
+    "article": null
+  },
+  {
+    "word": "Brief",
+    "article": "der"
+  },
+  {
+    "word": "bringen",
+    "article": null
+  },
+  {
+    "word": "Brot",
+    "article": "das"
+  },
+  {
+    "word": "Bruder",
+    "article": "der"
+  },
+  {
+    "word": "Buch",
+    "article": "das"
+  },
+  {
+    "word": "bunt",
+    "article": null
+  },
+  {
+    "word": "Burg",
+    "article": "die"
+  },
+  {
+    "word": "Busch",
+    "article": "der"
+  },
+  {
+    "word": "Cent",
+    "article": "der"
+  },
+  {
+    "word": "danken",
+    "article": null
+  },
+  {
+    "word": "dein",
+    "article": null
+  },
+  {
+    "word": "Dezember",
+    "article": "der"
+  },
+  {
+    "word": "dich",
+    "article": null
+  },
+  {
+    "word": "Dienstag",
+    "article": "der"
+  },
+  {
+    "word": "Donnerstag",
+    "article": "der"
+  },
+  {
+    "word": "Dose",
+    "article": "die"
+  },
+  {
+    "word": "drei",
+    "article": null
+  },
+  {
+    "word": "Ei",
+    "article": "das"
+  },
+  {
+    "word": "Eimer",
+    "article": "der"
+  },
+  {
+    "word": "einmal",
+    "article": null
+  },
+  {
+    "word": "eins",
+    "article": null
+  },
+  {
+    "word": "elf",
+    "article": null
+  },
+  {
+    "word": "Eltern",
+    "article": "die"
+  },
+  {
+    "word": "Ende",
+    "article": "das"
+  },
+  {
+    "word": "eng",
+    "article": null
+  },
+  {
+    "word": "Ente",
+    "article": "die"
+  },
+  {
+    "word": "Erde",
+    "article": "die"
+  },
+  {
+    "word": "euch",
+    "article": null
+  },
+  {
+    "word": "Eule",
+    "article": "die"
+  },
+  {
+    "word": "Euro",
+    "article": "der"
+  },
+  {
+    "word": "fallen",
+    "article": null
+  },
+  {
+    "word": "fangen",
+    "article": null
+  },
+  {
+    "word": "Februar",
+    "article": "der"
+  },
+  {
+    "word": "Feld",
+    "article": "das"
+  },
+  {
+    "word": "Fenster",
+    "article": "das"
+  },
+  {
+    "word": "Feuer",
+    "article": "das"
+  },
+  {
+    "word": "finden",
+    "article": null
+  },
+  {
+    "word": "Finger",
+    "article": "der"
+  },
+  {
+    "word": "Flasche",
+    "article": "die"
+  },
+  {
+    "word": "fliegen",
+    "article": null
+  },
+  {
+    "word": "Flügel",
+    "article": "der"
+  },
+  {
+    "word": "fragen",
+    "article": null
+  },
+  {
+    "word": "Frau",
+    "article": "die"
+  },
+  {
+    "word": "Freitag",
+    "article": "der"
+  },
+  {
+    "word": "freuen",
+    "article": null
+  },
+  {
+    "word": "Freund",
+    "article": "der"
+  },
+  {
+    "word": "Frucht",
+    "article": "die"
+  },
+  {
+    "word": "Frühling",
+    "article": "der"
+  },
+  {
+    "word": "fünf",
+    "article": null
+  },
+  {
+    "word": "Fuß",
+    "article": "der"
+  },
+  {
+    "word": "Gabel",
+    "article": "die"
+  },
+  {
+    "word": "Garten",
+    "article": "der"
+  },
+  {
+    "word": "geben",
+    "article": null
+  },
+  {
+    "word": "gehen",
+    "article": null
+  },
+  {
+    "word": "gelb",
+    "article": null
+  },
+  {
+    "word": "Geld",
+    "article": "das"
+  },
+  {
+    "word": "Gemüse",
+    "article": "das"
+  },
+  {
+    "word": "Gesicht",
+    "article": "das"
+  },
+  {
+    "word": "gesund",
+    "article": null
+  },
+  {
+    "word": "Gras",
+    "article": "das"
+  },
+  {
+    "word": "groß",
+    "article": null
+  },
+  {
+    "word": "grün",
+    "article": null
+  },
+  {
+    "word": "gut",
+    "article": null
+  },
+  {
+    "word": "Haar",
+    "article": "das"
+  },
+  {
+    "word": "haben",
+    "article": null
+  },
+  {
+    "word": "Hals",
+    "article": "der"
+  },
+  {
+    "word": "halten",
+    "article": null
+  },
+  {
+    "word": "Hand",
+    "article": "die"
+  },
+  {
+    "word": "hart",
+    "article": null
+  },
+  {
+    "word": "Hase",
+    "article": "der"
+  },
+  {
+    "word": "Haus",
+    "article": "das"
+  },
+  {
+    "word": "Haut",
+    "article": "die"
+  },
+  {
+    "word": "heiß",
+    "article": null
+  },
+  {
+    "word": "heißen",
+    "article": null
+  },
+  {
+    "word": "helfen",
+    "article": null
+  },
+  {
+    "word": "hell",
+    "article": null
+  },
+  {
+    "word": "Herbst",
+    "article": "der"
+  },
+  {
+    "word": "heute",
+    "article": null
+  },
+  {
+    "word": "Hexe",
+    "article": "die"
+  },
+  {
+    "word": "Hilfe",
+    "article": "die"
+  },
+  {
+    "word": "Himmel",
+    "article": "der"
+  },
+  {
+    "word": "hören",
+    "article": null
+  },
+  {
+    "word": "Hose",
+    "article": "die"
+  },
+  {
+    "word": "Hund",
+    "article": "der"
+  },
+  {
+    "word": "hundert",
+    "article": null
+  },
+  {
+    "word": "Igel",
+    "article": "der"
+  },
+  {
+    "word": "immer",
+    "article": null
+  },
+  {
+    "word": "ja",
+    "article": null
+  },
+  {
+    "word": "Jahr",
+    "article": "das"
+  },
+  {
+    "word": "Januar",
+    "article": "der"
+  },
+  {
+    "word": "Juli",
+    "article": "der"
+  },
+  {
+    "word": "Junge",
+    "article": "der"
+  },
+  {
+    "word": "Juni",
+    "article": "der"
+  },
+  {
+    "word": "Käfer",
+    "article": "der"
+  },
+  {
+    "word": "Kalender",
+    "article": "der"
+  },
+  {
+    "word": "kalt",
+    "article": null
+  },
+  {
+    "word": "Katze",
+    "article": "die"
+  },
+  {
+    "word": "kaufen",
+    "article": null
+  },
+  {
+    "word": "Kind",
+    "article": "das"
+  },
+  {
+    "word": "Klasse",
+    "article": "die"
+  },
+  {
+    "word": "Kleid",
+    "article": "das"
+  },
+  {
+    "word": "klein",
+    "article": null
+  },
+  {
+    "word": "kommen",
+    "article": null
+  },
+  {
+    "word": "können",
+    "article": null
+  },
+  {
+    "word": "Kopf",
+    "article": "der"
+  },
+  {
+    "word": "Körper",
+    "article": "der"
+  },
+  {
+    "word": "krank",
+    "article": null
+  },
+  {
+    "word": "Küche",
+    "article": "die"
+  },
+  {
+    "word": "Kuh",
+    "article": "die"
+  },
+  {
+    "word": "lachen",
+    "article": null
+  },
+  {
+    "word": "Laub",
+    "article": "das"
+  },
+  {
+    "word": "laufen",
+    "article": null
+  },
+  {
+    "word": "laut",
+    "article": null
+  },
+  {
+    "word": "leben",
+    "article": null
+  },
+  {
+    "word": "legen",
+    "article": null
+  },
+  {
+    "word": "leicht",
+    "article": null
+  },
+  {
+    "word": "leise",
+    "article": null
+  },
+  {
+    "word": "lernen",
+    "article": null
+  },
+  {
+    "word": "lesen",
+    "article": null
+  },
+  {
+    "word": "Licht",
+    "article": "das"
+  },
+  {
+    "word": "lieb",
+    "article": null
+  },
+  {
+    "word": "liegen",
+    "article": null
+  },
+  {
+    "word": "machen",
+    "article": null
+  },
+  {
+    "word": "Mädchen",
+    "article": "das"
+  },
+  {
+    "word": "Mai",
+    "article": "der"
+  },
+  {
+    "word": "malen",
+    "article": null
+  },
+  {
+    "word": "Mann",
+    "article": "der"
+  },
+  {
+    "word": "März",
+    "article": "der"
+  },
+  {
+    "word": "Maus",
+    "article": "die"
+  },
+  {
+    "word": "Milch",
+    "article": "die"
+  },
+  {
+    "word": "Minute",
+    "article": "die"
+  },
+  {
+    "word": "Mittwoch",
+    "article": "der"
+  },
+  {
+    "word": "mögen",
+    "article": null
+  },
+  {
+    "word": "Monat",
+    "article": "der"
+  },
+  {
+    "word": "Montag",
+    "article": "der"
+  },
+  {
+    "word": "morgen",
+    "article": null
+  },
+  {
+    "word": "Mund",
+    "article": "der"
+  },
+  {
+    "word": "müssen",
+    "article": null
+  },
+  {
+    "word": "Mutter",
+    "article": "die"
+  },
+  {
+    "word": "Nacht",
+    "article": "die"
+  },
+  {
+    "word": "Name",
+    "article": "der"
+  },
+  {
+    "word": "Nase",
+    "article": "die"
+  },
+  {
+    "word": "Nebel",
+    "article": "der"
+  },
+  {
+    "word": "nein",
+    "article": null
+  },
+  {
+    "word": "neu",
+    "article": null
+  },
+  {
+    "word": "neun",
+    "article": null
+  },
+  {
+    "word": "nie",
+    "article": null
+  },
+  {
+    "word": "November",
+    "article": "der"
+  },
+  {
+    "word": "Obst",
+    "article": "das"
+  },
+  {
+    "word": "oft",
+    "article": null
+  },
+  {
+    "word": "Ohr",
+    "article": "das"
+  },
+  {
+    "word": "Oktober",
+    "article": "der"
+  },
+  {
+    "word": "Onkel",
+    "article": "der"
+  },
+  {
+    "word": "Pferd",
+    "article": "das"
+  },
+  {
+    "word": "pflanzen",
+    "article": null
+  },
+  {
+    "word": "pflegen",
+    "article": null
+  },
+  {
+    "word": "Pizza",
+    "article": "die"
+  },
+  {
+    "word": "Puppe",
+    "article": "die"
+  },
+  {
+    "word": "quaken",
+    "article": null
+  },
+  {
+    "word": "Raum",
+    "article": "der"
+  },
+  {
+    "word": "Raupe",
+    "article": "die"
+  },
+  {
+    "word": "rechnen",
+    "article": null
+  },
+  {
+    "word": "reden",
+    "article": null
+  },
+  {
+    "word": "Regen",
+    "article": "der"
+  },
+  {
+    "word": "reich",
+    "article": null
+  },
+  {
+    "word": "reisen",
+    "article": null
+  },
+  {
+    "word": "Rock",
+    "article": "der"
+  },
+  {
+    "word": "rollen",
+    "article": null
+  },
+  {
+    "word": "rot",
+    "article": null
+  },
+  {
+    "word": "Rücken",
+    "article": "der"
+  },
+  {
+    "word": "rufen",
+    "article": null
+  },
+  {
+    "word": "Saft",
+    "article": "der"
+  },
+  {
+    "word": "sagen",
+    "article": null
+  },
+  {
+    "word": "Salz",
+    "article": "das"
+  },
+  {
+    "word": "Samstag",
+    "article": "der"
+  },
+  {
+    "word": "Sand",
+    "article": "der"
+  },
+  {
+    "word": "Satz",
+    "article": "der"
+  },
+  {
+    "word": "schauen",
+    "article": null
+  },
+  {
+    "word": "scheinen",
+    "article": null
+  },
+  {
+    "word": "Schere",
+    "article": "die"
+  },
+  {
+    "word": "Schiff",
+    "article": "das"
+  },
+  {
+    "word": "schlafen",
+    "article": null
+  },
+  {
+    "word": "schlagen",
+    "article": null
+  },
+  {
+    "word": "Schnee",
+    "article": "der"
+  },
+  {
+    "word": "schneiden",
+    "article": null
+  },
+  {
+    "word": "schnell",
+    "article": null
+  },
+  {
+    "word": "schön",
+    "article": null
+  },
+  {
+    "word": "schreiben",
+    "article": null
+  },
+  {
+    "word": "Schuh",
+    "article": "der"
+  },
+  {
+    "word": "Schule",
+    "article": "die"
+  },
+  {
+    "word": "schwarz",
+    "article": null
+  },
+  {
+    "word": "Schwester",
+    "article": "die"
+  },
+  {
+    "word": "sechs",
+    "article": null
+  },
+  {
+    "word": "sehen",
+    "article": null
+  },
+  {
+    "word": "Seife",
+    "article": "die"
+  },
+  {
+    "word": "Seite",
+    "article": "die"
+  },
+  {
+    "word": "Sekunde",
+    "article": "die"
+  },
+  {
+    "word": "September",
+    "article": "der"
+  },
+  {
+    "word": "sieben",
+    "article": null
+  },
+  {
+    "word": "singen",
+    "article": null
+  },
+  {
+    "word": "sitzen",
+    "article": null
+  },
+  {
+    "word": "Sohn",
+    "article": "der"
+  },
+  {
+    "word": "sollen",
+    "article": null
+  },
+  {
+    "word": "Sommer",
+    "article": "der"
+  },
+  {
+    "word": "Sonne",
+    "article": "die"
+  },
+  {
+    "word": "Sonntag",
+    "article": "der"
+  },
+  {
+    "word": "spielen",
+    "article": null
+  },
+  {
+    "word": "Sport",
+    "article": "der"
+  },
+  {
+    "word": "stehen",
+    "article": null
+  },
+  {
+    "word": "stellen",
+    "article": null
+  },
+  {
+    "word": "Stift",
+    "article": "der"
+  },
+  {
+    "word": "still",
+    "article": null
+  },
+  {
+    "word": "Stunde",
+    "article": "die"
+  },
+  {
+    "word": "suchen",
+    "article": null
+  },
+  {
+    "word": "Tag",
+    "article": "der"
+  },
+  {
+    "word": "Tante",
+    "article": "die"
+  },
+  {
+    "word": "Tasche",
+    "article": "die"
+  },
+  {
+    "word": "Tasse",
+    "article": "die"
+  },
+  {
+    "word": "Taxi",
+    "article": "das"
+  },
+  {
+    "word": "Tee",
+    "article": "der"
+  },
+  {
+    "word": "Tier",
+    "article": "das"
+  },
+  {
+    "word": "Tochter",
+    "article": "die"
+  },
+  {
+    "word": "toll",
+    "article": null
+  },
+  {
+    "word": "tragen",
+    "article": null
+  },
+  {
+    "word": "trinken",
+    "article": null
+  },
+  {
+    "word": "turnen",
+    "article": null
+  },
+  {
+    "word": "üben",
+    "article": null
+  },
+  {
+    "word": "Uhr",
+    "article": "die"
+  },
+  {
+    "word": "Vater",
+    "article": "der"
+  },
+  {
+    "word": "versuchen",
+    "article": null
+  },
+  {
+    "word": "vier",
+    "article": null
+  },
+  {
+    "word": "Vogel",
+    "article": "der"
+  },
+  {
+    "word": "wann",
+    "article": null
+  },
+  {
+    "word": "warm",
+    "article": null
+  },
+  {
+    "word": "warten",
+    "article": null
+  },
+  {
+    "word": "warum",
+    "article": null
+  },
+  {
+    "word": "waschen",
+    "article": null
+  },
+  {
+    "word": "Wasser",
+    "article": "das"
+  },
+  {
+    "word": "weg",
+    "article": null
+  },
+  {
+    "word": "Weg",
+    "article": "der"
+  },
+  {
+    "word": "weil",
+    "article": null
+  },
+  {
+    "word": "weiß",
+    "article": null
+  },
+  {
+    "word": "weit",
+    "article": null
+  },
+  {
+    "word": "wenig",
+    "article": null
+  },
+  {
+    "word": "wer",
+    "article": null
+  },
+  {
+    "word": "werden",
+    "article": null
+  },
+  {
+    "word": "Wetter",
+    "article": "das"
+  },
+  {
+    "word": "Wiese",
+    "article": "die"
+  },
+  {
+    "word": "Wind",
+    "article": "der"
+  },
+  {
+    "word": "Winter",
+    "article": "der"
+  },
+  {
+    "word": "Woche",
+    "article": "die"
+  },
+  {
+    "word": "Wolke",
+    "article": "die"
+  },
+  {
+    "word": "wollen",
+    "article": null
+  },
+  {
+    "word": "Wort",
+    "article": "das"
+  },
+  {
+    "word": "Wunsch",
+    "article": "der"
+  },
+  {
+    "word": "Zahn",
+    "article": "der"
+  },
+  {
+    "word": "Zeh",
+    "article": "der"
+  },
+  {
+    "word": "zehn",
+    "article": null
+  },
+  {
+    "word": "zeigen",
+    "article": null
+  },
+  {
+    "word": "Zimmer",
+    "article": "das"
+  },
+  {
+    "word": "zwei",
+    "article": null
+  },
+  {
+    "word": "zwölf",
+    "article": null
+  },
+  {
+    "word": "Abend",
+    "article": "der"
+  },
+  {
+    "word": "ähnlich",
+    "article": null
+  },
+  {
+    "word": "ändern",
+    "article": null
+  },
+  {
+    "word": "anders",
+    "article": null
+  },
+  {
+    "word": "Angst",
+    "article": "die"
+  },
+  {
+    "word": "ärgern",
+    "article": null
+  },
+  {
+    "word": "Arzt",
+    "article": "der"
+  },
+  {
+    "word": "backen",
+    "article": null
+  },
+  {
+    "word": "Bahn",
+    "article": "die"
+  },
+  {
+    "word": "bald",
+    "article": null
+  },
+  {
+    "word": "beginnen",
+    "article": null
+  },
+  {
+    "word": "Beispiel",
+    "article": "das"
+  },
+  {
+    "word": "beißen",
+    "article": null
+  },
+  {
+    "word": "belohnen",
+    "article": null
+  },
+  {
+    "word": "beobachten",
+    "article": null
+  },
+  {
+    "word": "bequem",
+    "article": null
+  },
+  {
+    "word": "bereits",
+    "article": null
+  },
+  {
+    "word": "Beruf",
+    "article": "der"
+  },
+  {
+    "word": "besser",
+    "article": null
+  },
+  {
+    "word": "Bett",
+    "article": "das"
+  },
+  {
+    "word": "bevor",
+    "article": null
+  },
+  {
+    "word": "bewegen",
+    "article": null
+  },
+  {
+    "word": "bezahlen",
+    "article": null
+  },
+  {
+    "word": "biegen",
+    "article": null
+  },
+  {
+    "word": "bisschen",
+    "article": null
+  },
+  {
+    "word": "bitten",
+    "article": null
+  },
+  {
+    "word": "blicken",
+    "article": null
+  },
+  {
+    "word": "blind",
+    "article": null
+  },
+  {
+    "word": "Blitz",
+    "article": "der"
+  },
+  {
+    "word": "bloß",
+    "article": null
+  },
+  {
+    "word": "bohren",
+    "article": null
+  },
+  {
+    "word": "Boot",
+    "article": "das"
+  },
+  {
+    "word": "böse",
+    "article": null
+  },
+  {
+    "word": "boxen",
+    "article": null
+  },
+  {
+    "word": "Brand",
+    "article": "der"
+  },
+  {
+    "word": "brennen",
+    "article": null
+  },
+  {
+    "word": "Brille",
+    "article": "die"
+  },
+  {
+    "word": "Brücke",
+    "article": "die"
+  },
+  {
+    "word": "Computer",
+    "article": "der"
+  },
+  {
+    "word": "Decke",
+    "article": "die"
+  },
+  {
+    "word": "denken",
+    "article": null
+  },
+  {
+    "word": "deutsch",
+    "article": null
+  },
+  {
+    "word": "dick",
+    "article": null
+  },
+  {
+    "word": "Donner",
+    "article": "der"
+  },
+  {
+    "word": "draußen",
+    "article": null
+  },
+  {
+    "word": "drehen",
+    "article": null
+  },
+  {
+    "word": "Druck",
+    "article": "der"
+  },
+  {
+    "word": "dumm",
+    "article": null
+  },
+  {
+    "word": "dunkel",
+    "article": null
+  },
+  {
+    "word": "dünn",
+    "article": null
+  },
+  {
+    "word": "dürfen",
+    "article": null
+  },
+  {
+    "word": "Durst",
+    "article": "der"
+  },
+  {
+    "word": "Ecke",
+    "article": "die"
+  },
+  {
+    "word": "ehrlich",
+    "article": null
+  },
+  {
+    "word": "eigentlich",
+    "article": null
+  },
+  {
+    "word": "entdecken",
+    "article": null
+  },
+  {
+    "word": "entfernen",
+    "article": null
+  },
+  {
+    "word": "entwickeln",
+    "article": null
+  },
+  {
+    "word": "erklären",
+    "article": null
+  },
+  {
+    "word": "erlauben",
+    "article": null
+  },
+  {
+    "word": "erleben",
+    "article": null
+  },
+  {
+    "word": "ernähren",
+    "article": null
+  },
+  {
+    "word": "erschrecken",
+    "article": null
+  },
+  {
+    "word": "erwarten",
+    "article": null
+  },
+  {
+    "word": "erzählen",
+    "article": null
+  },
+  {
+    "word": "essen",
+    "article": null
+  },
+  {
+    "word": "Europa",
+    "article": "das"
+  },
+  {
+    "word": "fahren",
+    "article": null
+  },
+  {
+    "word": "Fahrrad",
+    "article": "das"
+  },
+  {
+    "word": "Familie",
+    "article": "die"
+  },
+  {
+    "word": "Fehler",
+    "article": "der"
+  },
+  {
+    "word": "Ferien",
+    "article": "die"
+  },
+  {
+    "word": "Fernseher",
+    "article": "der"
+  },
+  {
+    "word": "fertig",
+    "article": null
+  },
+  {
+    "word": "fett",
+    "article": null
+  },
+  {
+    "word": "feucht",
+    "article": null
+  },
+  {
+    "word": "Feuerwehr",
+    "article": "die"
+  },
+  {
+    "word": "Fleiß",
+    "article": "der"
+  },
+  {
+    "word": "fließen",
+    "article": null
+  },
+  {
+    "word": "Flugzeug",
+    "article": "das"
+  },
+  {
+    "word": "Fluss",
+    "article": "der"
+  },
+  {
+    "word": "flüssig",
+    "article": null
+  },
+  {
+    "word": "frei",
+    "article": null
+  },
+  {
+    "word": "fremd",
+    "article": null
+  },
+  {
+    "word": "fressen",
+    "article": null
+  },
+  {
+    "word": "Frieden",
+    "article": "der"
+  },
+  {
+    "word": "frieren",
+    "article": null
+  },
+  {
+    "word": "frisch",
+    "article": null
+  },
+  {
+    "word": "fröhlich",
+    "article": null
+  },
+  {
+    "word": "frühstücken",
+    "article": null
+  },
+  {
+    "word": "Fuchs",
+    "article": "der"
+  },
+  {
+    "word": "fühlen",
+    "article": null
+  },
+  {
+    "word": "füllen",
+    "article": null
+  },
+  {
+    "word": "Gebäude",
+    "article": "das"
+  },
+  {
+    "word": "Geburt",
+    "article": "die"
+  },
+  {
+    "word": "Gefahr",
+    "article": "die"
+  },
+  {
+    "word": "gefallen",
+    "article": null
+  },
+  {
+    "word": "geheim",
+    "article": null
+  },
+  {
+    "word": "Gemeinde",
+    "article": "die"
+  },
+  {
+    "word": "Geschäft",
+    "article": "das"
+  },
+  {
+    "word": "Gesetz",
+    "article": "das"
+  },
+  {
+    "word": "gestern",
+    "article": null
+  },
+  {
+    "word": "gewinnen",
+    "article": null
+  },
+  {
+    "word": "Gewitter",
+    "article": "das"
+  },
+  {
+    "word": "gießen",
+    "article": null
+  },
+  {
+    "word": "glatt",
+    "article": null
+  },
+  {
+    "word": "Glück",
+    "article": "das"
+  },
+  {
+    "word": "glühen",
+    "article": null
+  },
+  {
+    "word": "Gott",
+    "article": "der"
+  },
+  {
+    "word": "Gruß",
+    "article": "der"
+  },
+  {
+    "word": "Handy",
+    "article": "das"
+  },
+  {
+    "word": "hängen",
+    "article": null
+  },
+  {
+    "word": "häufig",
+    "article": null
+  },
+  {
+    "word": "Hecke",
+    "article": "die"
+  },
+  {
+    "word": "heizen",
+    "article": null
+  },
+  {
+    "word": "Hemd",
+    "article": "das"
+  },
+  {
+    "word": "Herr",
+    "article": "der"
+  },
+  {
+    "word": "Hitze",
+    "article": "die"
+  },
+  {
+    "word": "hoffen",
+    "article": null
+  },
+  {
+    "word": "Höhe",
+    "article": "die"
+  },
+  {
+    "word": "hohl",
+    "article": null
+  },
+  {
+    "word": "Hunger",
+    "article": "der"
+  },
+  {
+    "word": "impfen",
+    "article": null
+  },
+  {
+    "word": "informieren",
+    "article": null
+  },
+  {
+    "word": "Interesse",
+    "article": "das"
+  },
+  {
+    "word": "jede",
+    "article": null
+  },
+  {
+    "word": "jemand",
+    "article": null
+  },
+  {
+    "word": "jetzt",
+    "article": null
+  },
+  {
+    "word": "jung",
+    "article": null
+  },
+  {
+    "word": "Käfig",
+    "article": "der"
+  },
+  {
+    "word": "Kamm",
+    "article": "der"
+  },
+  {
+    "word": "kaputt",
+    "article": null
+  },
+  {
+    "word": "kennen",
+    "article": null
+  },
+  {
+    "word": "klar",
+    "article": null
+  },
+  {
+    "word": "klettern",
+    "article": null
+  },
+  {
+    "word": "Kraft",
+    "article": "die"
+  },
+  {
+    "word": "kratzen",
+    "article": null
+  },
+  {
+    "word": "Kreuzung",
+    "article": "die"
+  },
+  {
+    "word": "kriechen",
+    "article": null
+  },
+  {
+    "word": "Krieg",
+    "article": "der"
+  },
+  {
+    "word": "kühl",
+    "article": null
+  },
+  {
+    "word": "Kuss",
+    "article": "der"
+  },
+  {
+    "word": "Land",
+    "article": "das"
+  },
+  {
+    "word": "lang",
+    "article": null
+  },
+  {
+    "word": "langsam",
+    "article": null
+  },
+  {
+    "word": "Lärm",
+    "article": "der"
+  },
+  {
+    "word": "lassen",
+    "article": null
+  },
+  {
+    "word": "Lehrer",
+    "article": "der"
+  },
+  {
+    "word": "letzte",
+    "article": null
+  },
+  {
+    "word": "leuchten",
+    "article": null
+  },
+  {
+    "word": "Lexikon",
+    "article": "das"
+  },
+  {
+    "word": "Lied",
+    "article": "das"
+  },
+  {
+    "word": "links",
+    "article": null
+  },
+  {
+    "word": "Löffel",
+    "article": "der"
+  },
+  {
+    "word": "Magnet",
+    "article": "der"
+  },
+  {
+    "word": "Maschine",
+    "article": "die"
+  },
+  {
+    "word": "Meer",
+    "article": "das"
+  },
+  {
+    "word": "messen",
+    "article": null
+  },
+  {
+    "word": "Messer",
+    "article": "das"
+  },
+  {
+    "word": "Miete",
+    "article": "die"
+  },
+  {
+    "word": "Mittag",
+    "article": "der"
+  },
+  {
+    "word": "Mitte",
+    "article": "die"
+  },
+  {
+    "word": "mixen",
+    "article": null
+  },
+  {
+    "word": "Moos",
+    "article": "das"
+  },
+  {
+    "word": "Müll",
+    "article": "der"
+  },
+  {
+    "word": "Nachmittag",
+    "article": "der"
+  },
+  {
+    "word": "nächste",
+    "article": null
+  },
+  {
+    "word": "nah",
+    "article": null
+  },
+  {
+    "word": "nähen",
+    "article": null
+  },
+  {
+    "word": "Nahrung",
+    "article": "die"
+  },
+  {
+    "word": "nass",
+    "article": null
+  },
+  {
+    "word": "Natur",
+    "article": "die"
+  },
+  {
+    "word": "nehmen",
+    "article": null
+  },
+  {
+    "word": "niemand",
+    "article": null
+  },
+  {
+    "word": "Nummer",
+    "article": "die"
+  },
+  {
+    "word": "Nuss",
+    "article": "die"
+  },
+  {
+    "word": "nützlich",
+    "article": null
+  },
+  {
+    "word": "ob",
+    "article": null
+  },
+  {
+    "word": "offen",
+    "article": null
+  },
+  {
+    "word": "Ostern",
+    "article": "das"
+  },
+  {
+    "word": "packen",
+    "article": null
+  },
+  {
+    "word": "Paket",
+    "article": "das"
+  },
+  {
+    "word": "Papier",
+    "article": "das"
+  },
+  {
+    "word": "passen",
+    "article": null
+  },
+  {
+    "word": "Pilz",
+    "article": "der"
+  },
+  {
+    "word": "Platz",
+    "article": "der"
+  },
+  {
+    "word": "plötzlich",
+    "article": null
+  },
+  {
+    "word": "Programm",
+    "article": "das"
+  },
+  {
+    "word": "Quadrat",
+    "article": "das"
+  },
+  {
+    "word": "quälen",
+    "article": null
+  },
+  {
+    "word": "Quelle",
+    "article": "die"
+  },
+  {
+    "word": "Radio",
+    "article": "das"
+  },
+  {
+    "word": "raten",
+    "article": null
+  },
+  {
+    "word": "rechts",
+    "article": null
+  },
+  {
+    "word": "Reh",
+    "article": "das"
+  },
+  {
+    "word": "reißen",
+    "article": null
+  },
+  {
+    "word": "rennen",
+    "article": null
+  },
+  {
+    "word": "richtig",
+    "article": null
+  },
+  {
+    "word": "riechen",
+    "article": null
+  },
+  {
+    "word": "Ruhe",
+    "article": "die"
+  },
+  {
+    "word": "rühren",
+    "article": null
+  },
+  {
+    "word": "sammeln",
+    "article": null
+  },
+  {
+    "word": "schalten",
+    "article": null
+  },
+  {
+    "word": "scharf",
+    "article": null
+  },
+  {
+    "word": "Schatten",
+    "article": "der"
+  },
+  {
+    "word": "schieben",
+    "article": null
+  },
+  {
+    "word": "schief",
+    "article": null
+  },
+  {
+    "word": "schließen",
+    "article": null
+  },
+  {
+    "word": "schließlich",
+    "article": null
+  },
+  {
+    "word": "Schloss",
+    "article": "das"
+  },
+  {
+    "word": "Schlüssel",
+    "article": "der"
+  },
+  {
+    "word": "schmecken",
+    "article": null
+  },
+  {
+    "word": "Schmutz",
+    "article": "der"
+  },
+  {
+    "word": "Schreck",
+    "article": "der"
+  },
+  {
+    "word": "schreien",
+    "article": null
+  },
+  {
+    "word": "Schutz",
+    "article": "der"
+  },
+  {
+    "word": "schweigen",
+    "article": null
+  },
+  {
+    "word": "schwierig",
+    "article": null
+  },
+  {
+    "word": "schwimmen",
+    "article": null
+  },
+  {
+    "word": "schwitzen",
+    "article": null
+  },
+  {
+    "word": "See",
+    "article": "der"
+  },
+  {
+    "word": "seit",
+    "article": null
+  },
+  {
+    "word": "Spaß",
+    "article": "der"
+  },
+  {
+    "word": "Spaziergang",
+    "article": "der"
+  },
+  {
+    "word": "spät",
+    "article": null
+  },
+  {
+    "word": "Spiegel",
+    "article": "der"
+  },
+  {
+    "word": "spitz",
+    "article": null
+  },
+  {
+    "word": "Stadt",
+    "article": "die"
+  },
+  {
+    "word": "Stamm",
+    "article": "der"
+  },
+  {
+    "word": "Stange",
+    "article": "die"
+  },
+  {
+    "word": "stark",
+    "article": null
+  },
+  {
+    "word": "Stiel",
+    "article": "der"
+  },
+  {
+    "word": "stimmen",
+    "article": null
+  },
+  {
+    "word": "Stoff",
+    "article": "der"
+  },
+  {
+    "word": "Strand",
+    "article": "der"
+  },
+  {
+    "word": "Straße",
+    "article": "die"
+  },
+  {
+    "word": "Strauch",
+    "article": "der"
+  },
+  {
+    "word": "Strauß",
+    "article": "der"
+  },
+  {
+    "word": "streiten",
+    "article": null
+  },
+  {
+    "word": "Stück",
+    "article": "das"
+  },
+  {
+    "word": "Stuhl",
+    "article": "der"
+  },
+  {
+    "word": "Sturm",
+    "article": "der"
+  },
+  {
+    "word": "süß",
+    "article": null
+  },
+  {
+    "word": "Tabelle",
+    "article": "die"
+  },
+  {
+    "word": "Tanne",
+    "article": "die"
+  },
+  {
+    "word": "tausend",
+    "article": null
+  },
+  {
+    "word": "Technik",
+    "article": "die"
+  },
+  {
+    "word": "Telefon",
+    "article": "das"
+  },
+  {
+    "word": "Teller",
+    "article": "der"
+  },
+  {
+    "word": "Temperatur",
+    "article": "die"
+  },
+  {
+    "word": "Text",
+    "article": "der"
+  },
+  {
+    "word": "Theater",
+    "article": "das"
+  },
+  {
+    "word": "Thermometer",
+    "article": "das"
+  },
+  {
+    "word": "tief",
+    "article": null
+  },
+  {
+    "word": "Träne",
+    "article": "die"
+  },
+  {
+    "word": "Traum",
+    "article": "der"
+  },
+  {
+    "word": "treffen",
+    "article": null
+  },
+  {
+    "word": "trocken",
+    "article": null
+  },
+  {
+    "word": "überqueren",
+    "article": null
+  },
+  {
+    "word": "ungefähr",
+    "article": null
+  },
+  {
+    "word": "Unterricht",
+    "article": "der"
+  },
+  {
+    "word": "Urlaub",
+    "article": "der"
+  },
+  {
+    "word": "Vase",
+    "article": "die"
+  },
+  {
+    "word": "verbieten",
+    "article": null
+  },
+  {
+    "word": "verbrauchen",
+    "article": null
+  },
+  {
+    "word": "verbrennen",
+    "article": null
+  },
+  {
+    "word": "vergessen",
+    "article": null
+  },
+  {
+    "word": "Verkehr",
+    "article": "der"
+  },
+  {
+    "word": "verletzen",
+    "article": null
+  },
+  {
+    "word": "verlieren",
+    "article": null
+  },
+  {
+    "word": "verpacken",
+    "article": null
+  },
+  {
+    "word": "verschmutzen",
+    "article": null
+  },
+  {
+    "word": "vielleicht",
+    "article": null
+  },
+  {
+    "word": "voll",
+    "article": null
+  },
+  {
+    "word": "Vorfahrt",
+    "article": "die"
+  },
+  {
+    "word": "Vorsicht",
+    "article": "die"
+  },
+  {
+    "word": "wachsen",
+    "article": null
+  },
+  {
+    "word": "wählen",
+    "article": null
+  },
+  {
+    "word": "während",
+    "article": null
+  },
+  {
+    "word": "Wald",
+    "article": "der"
+  },
+  {
+    "word": "wechseln",
+    "article": null
+  },
+  {
+    "word": "Wecker",
+    "article": "der"
+  },
+  {
+    "word": "Weihnachten",
+    "article": "das"
+  },
+  {
+    "word": "wichtig",
+    "article": null
+  },
+  {
+    "word": "wiegen",
+    "article": null
+  },
+  {
+    "word": "wild",
+    "article": null
+  },
+  {
+    "word": "wissen",
+    "article": null
+  },
+  {
+    "word": "wohnen",
+    "article": null
+  },
+  {
+    "word": "Wurzel",
+    "article": "die"
+  },
+  {
+    "word": "Zahl",
+    "article": "die"
+  },
+  {
+    "word": "zeichnen",
+    "article": null
+  },
+  {
+    "word": "Zeitung",
+    "article": "die"
+  },
+  {
+    "word": "Zeugnis",
+    "article": "das"
+  },
+  {
+    "word": "ziehen",
+    "article": null
+  },
+  {
+    "word": "Ziel",
+    "article": "das"
+  },
+  {
+    "word": "Zucker",
+    "article": "der"
+  },
+  {
+    "word": "Zukunft",
+    "article": "die"
+  },
+  {
+    "word": "zurück",
+    "article": null
+  },
+  {
+    "word": "zusammen",
+    "article": null
+  },
+  {
+    "word": "Zwiebel",
+    "article": "die"
+  }
+]

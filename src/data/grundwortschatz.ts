@@ -19,6 +19,52 @@ export interface GrundwortschatzListe {
   datei: string;
 }
 
+/**
+ * Normalisierter Listeneintrag (#14). `artikel` ist dreiwertig:
+ *  - 'der'|'die'|'das' → kuratierter Artikel aus der Liste (überschreibt beim
+ *    Import den Wörterbuch-Vorschlag)
+ *  - null              → Wort hat bewusst keinen Artikel (kein Nomen)
+ *  - undefined         → Liste macht keine Aussage → Wörterbuch darf vorschlagen
+ */
+export interface GrundwortschatzEintrag {
+  wort: string;
+  artikel?: 'der' | 'die' | 'das' | null;
+}
+
+const ARTIKEL = new Set(['der', 'die', 'das']);
+
+/**
+ * Wandelt rohe Listendaten in Einträge um. Unterstützt beide Datei-Schemata —
+ * `["Apfel", …]` (Bayern/NRW) und `[{"word": "Apfel", "article": "der"}, …]`
+ * (Berlin) — fehlertolerant: kaputte Einträge werden übersprungen, unbekannte
+ * Artikel-Werte als „keine Aussage" behandelt.
+ */
+export function normalisiereEintraege(roh: unknown): GrundwortschatzEintrag[] {
+  if (!Array.isArray(roh)) return [];
+  const ergebnis: GrundwortschatzEintrag[] = [];
+  for (const eintrag of roh) {
+    if (typeof eintrag === 'string') {
+      const wort = eintrag.trim();
+      if (wort) ergebnis.push({ wort });
+      continue;
+    }
+    if (eintrag && typeof eintrag === 'object') {
+      const wort = String((eintrag as { word?: unknown }).word ?? '').trim();
+      if (!wort) continue;
+      const artikelRoh = (eintrag as { article?: unknown }).article;
+      if (artikelRoh === null) {
+        ergebnis.push({ wort, artikel: null });
+      } else if (typeof artikelRoh === 'string' && ARTIKEL.has(artikelRoh)) {
+        ergebnis.push({ wort, artikel: artikelRoh as 'der' | 'die' | 'das' });
+      } else {
+        ergebnis.push({ wort }); // unbekannter Wert → keine Aussage
+      }
+    }
+    // Alles andere (Zahlen, null, …) wird still übersprungen.
+  }
+  return ergebnis;
+}
+
 export const GRUNDWORTSCHATZ_LISTEN: GrundwortschatzListe[] = [
   {
     id: 'bayern-1-2',
@@ -41,30 +87,38 @@ export const GRUNDWORTSCHATZ_LISTEN: GrundwortschatzListe[] = [
     klasse: '1–4',
     datei: 'nrw.json',
   },
+  {
+    id: 'berlin-1-4',
+    label: 'Berlin/Brandenburg · Grundwortschatz 1–4',
+    bundesland: 'Berlin/Brandenburg',
+    klasse: '1–4',
+    datei: 'grundwortschatz_berlin_1bis4.json',
+  },
 ];
 
-const cache = new Map<string, string[]>();
+const cache = new Map<string, GrundwortschatzEintrag[]>();
 
 /**
- * Lädt die Wortliste einer Grundwortschatz-Liste (mit Cache). Eigene,
- * importierte Listen (DB-Tabelle `wortlisten`) haben Vorrang vor den
- * mitgelieferten JSON-Dateien.
+ * Lädt eine Grundwortschatz-Liste als normalisierte Einträge (mit Cache).
+ * Eigene, importierte Listen (DB-Tabelle `wortlisten`, reine Wortarrays)
+ * haben Vorrang vor den mitgelieferten JSON-Dateien.
  */
-export async function ladeGrundwortschatz(id: string): Promise<string[]> {
+export async function ladeGrundwortschatz(id: string): Promise<GrundwortschatzEintrag[]> {
   if (cache.has(id)) return cache.get(id)!;
   // Importierte Liste?
   const eigene = await db.wortlisten.get(id);
   if (eigene) {
-    cache.set(id, eigene.woerter);
-    return eigene.woerter;
+    const eintraege = normalisiereEintraege(eigene.woerter);
+    cache.set(id, eintraege);
+    return eintraege;
   }
   const liste = GRUNDWORTSCHATZ_LISTEN.find((l) => l.id === id);
   if (!liste) return [];
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}data/grundwortschatz/${liste.datei}`);
-    const woerter: string[] = res.ok ? await res.json() : [];
-    cache.set(id, woerter);
-    return woerter;
+    const eintraege = normalisiereEintraege(res.ok ? await res.json() : []);
+    cache.set(id, eintraege);
+    return eintraege;
   } catch {
     return [];
   }
