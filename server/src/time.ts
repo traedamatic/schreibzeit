@@ -28,6 +28,31 @@ function tzOffsetMs(tz: string, atMs: number): number {
   return asUTC - atMs;
 }
 
+/** Local calendar day of `ms` in `tz` as "YYYY-MM-DD" (stats bucketing). */
+export function tagesSchluessel(tz: string, ms: number): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(ms);
+}
+
+/**
+ * The last `anzahl` local day keys in `tz`, newest (today) first. Steps in
+ * 24h increments and dedupes, so DST transitions cannot duplicate a day.
+ */
+export function tageRueckwaerts(tz: string, abMs: number, anzahl: number): string[] {
+  const keys: string[] = [];
+  let ms = abMs;
+  while (keys.length < anzahl) {
+    const key = tagesSchluessel(tz, ms);
+    if (keys[keys.length - 1] !== key) keys.push(key);
+    ms -= 86_400_000;
+  }
+  return keys;
+}
+
 /** Epoch ms of local midnight (start of "today") in `tz` for the instant `nowMs`. */
 export function startOfDayMs(tz: string, nowMs: number): number {
   const dtf = new Intl.DateTimeFormat('en-CA', {

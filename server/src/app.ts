@@ -10,6 +10,7 @@ import { kidAuthRoutes } from './routes/kidAuth';
 import { kidsRoutes } from './routes/kids';
 import { wordsRoutes } from './routes/words';
 import { practiceRoutes } from './routes/practice';
+import { statsRoutes } from './routes/stats';
 
 /**
  * Build the API app around an open database connection.
@@ -24,5 +25,6 @@ export function createApp(db: Database, config: Config = loadConfig({})) {
     .use(kidAuthRoutes(db, config))
     .use(kidsRoutes(db))
     .use(wordsRoutes(db))
-    .use(practiceRoutes(db, config));
+    .use(practiceRoutes(db, config))
+    .use(statsRoutes(db, config));
 }

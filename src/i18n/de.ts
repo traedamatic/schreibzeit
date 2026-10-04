@@ -11,6 +11,7 @@ export const de = {
     knickblatt: 'Knickblatt',
     uebungstext: 'Übungstext',
     wortkarten: 'Wortkarten',
+    dashboard: 'Dashboard',
     einstellungen: 'Einstellungen',
   },
   lernstand: {

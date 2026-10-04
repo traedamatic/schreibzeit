@@ -158,6 +158,49 @@ export const wortApi = {
     request<{ deleted: number }>('POST', '/words/bulk-delete', { ids }),
 };
 
+/** Dashboard-KPIs (GET /stats/overview) — eine Zeile pro Kind. */
+export interface KidUebersicht {
+  kid: { id: string; name: string; lernstand: Lernstand; dailyGoalSeconds: number };
+  today: { secondsPracticed: number; goalMet: boolean };
+  streak: number;
+  week: { secondsPracticed: number; daysGoalMet: number };
+  dueCount: number;
+  masteryPct: number;
+  weakWordsCount: number;
+  lastPracticedAt: number | null;
+}
+
+export interface TagesAktivitaet {
+  date: string;
+  secondsPracticed: number;
+  goalMet: boolean;
+  wordsReviewed: number;
+  correctRate: number | null;
+}
+
+export interface StreakErgebnis {
+  current: number;
+  longest: number;
+}
+
+export interface SchwachesWort {
+  wordId: string;
+  wort: string;
+  fach: number;
+  attempts: number;
+  wrong: number;
+  missRate: number;
+}
+
+export const statsApi = {
+  overview: () => request<KidUebersicht[]>('GET', '/stats/overview'),
+  activity: (kindId: string, days = 14) =>
+    request<TagesAktivitaet[]>('GET', `/kids/${kindId}/stats/activity?days=${days}`),
+  streak: (kindId: string) => request<StreakErgebnis>('GET', `/kids/${kindId}/stats/streak`),
+  weakWords: (kindId: string) =>
+    request<SchwachesWort[]>('GET', `/kids/${kindId}/stats/weak-words`),
+};
+
 export const uebenApi = {
   login: (name: string, pin: string) =>
     request<ServerSchueler>('POST', '/auth/kid-login', { name, pin }),

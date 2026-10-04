@@ -1,7 +1,7 @@
 // UI-Zustand (nicht persistent): aktuelle Auswahl und aktiver Tab.
 import { create } from 'zustand';
 
-export type TabId = 'kartei' | 'knickblatt' | 'uebungstext' | 'wortkarten';
+export type TabId = 'kartei' | 'knickblatt' | 'uebungstext' | 'wortkarten' | 'dashboard';
 
 interface UiState {
   selectedKindId?: string;

@@ -5,6 +5,7 @@ import { KarteiView } from './views/KarteiView';
 import { KnickblattView } from './views/KnickblattView';
 import { UebungstextView } from './views/UebungstextView';
 import { WortkartenView } from './views/WortkartenView';
+import { DashboardView } from './views/DashboardView';
 import { EinstellungenModal } from './views/EinstellungenView';
 import { DatenschutzBanner } from './components/DatenschutzBanner';
 import { AdminAnmeldung, SyncStatusChip } from './components/ServerSync';
@@ -15,7 +16,9 @@ import {
   IconFold,
   IconMenu,
   IconSparkles,
+  IconUsers,
 } from './components/icons';
+import { istRemoteAktiv } from './services/api';
 import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
 import { displayName, useUiStore, type TabId } from './state/store';
 import { repository } from './db/repository';
@@ -28,6 +31,10 @@ const TABS: { id: TabId; label: string; icon: typeof IconBook }[] = [
   { id: 'knickblatt', label: t.nav.knickblatt, icon: IconFold },
   { id: 'uebungstext', label: t.nav.uebungstext, icon: IconSparkles },
   { id: 'wortkarten', label: t.nav.wortkarten, icon: IconCards },
+  // Das Dashboard (Familien-Überblick) gibt es nur im Server-Betrieb.
+  ...(istRemoteAktiv()
+    ? [{ id: 'dashboard' as TabId, label: t.nav.dashboard, icon: IconUsers }]
+    : []),
 ];
 
 export default function App() {
@@ -170,7 +177,7 @@ export default function App() {
             </div>
           </header>
 
-          {kind && (
+          {(kind || istRemoteAktiv()) && (
             <nav className="flex gap-1 overflow-x-auto border-b border-paper-200 bg-paper-50 px-2">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -195,7 +202,11 @@ export default function App() {
           )}
 
           <div className="flex-1 overflow-y-auto">
-            {!kind ? (
+            {activeTab === 'dashboard' ? (
+              <div className="mx-auto w-full max-w-[1400px] px-4 py-5 xl:mx-0">
+                <DashboardView einstellungen={einstellungen} />
+              </div>
+            ) : !kind ? (
               <div className="mx-auto max-w-2xl px-4 py-16">
                 <Willkommen onOpenSidebar={() => setSidebarOffen(true)} />
               </div>
