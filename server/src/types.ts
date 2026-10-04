@@ -18,11 +18,19 @@ export const LERNSTAND_VALUES: readonly Lernstand[] = [
 export const WORT_STATUS_VALUES: readonly WortStatus[] = ['neu', 'wird_geuebt', 'sitzt'];
 export const ARTIKEL_VALUES: readonly Artikel[] = ['der', 'die', 'das', ''];
 
+export interface FamilyRow {
+  id: string;
+  name: string | null;
+  created_at: number;
+}
+
 export interface AdminRow {
   id: string;
   email: string;
   password_hash: string;
   display_name: string | null;
+  /** Familie, zu der dieser Admin gehört (Tenant-Grenze). */
+  family_id: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -31,6 +39,8 @@ export interface KidRow {
   id: string;
   /** Creating admin (audit only — not an access boundary; family-shared). */
   admin_id: string | null;
+  /** Familie, der das Kind gehört — die Sichtbarkeits-/Zugriffsgrenze. */
+  family_id: string | null;
   name: string;
   pin_hash: string | null;
   lernstand: Lernstand;

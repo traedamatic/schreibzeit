@@ -153,9 +153,16 @@ export function schwacheWoerter(db: Database, kidId: string, limit = 10): Schwac
     .slice(0, limit);
 }
 
-/** Familien-Überblick: eine KPI-Zeile pro Kind. */
-export function uebersicht(db: Database, tz: string, nowMs: number): KidUebersicht[] {
-  const kids = db.query('SELECT * FROM kids ORDER BY name COLLATE NOCASE;').all() as KidRow[];
+/** Familien-Überblick: eine KPI-Zeile pro Kind der angegebenen Familie. */
+export function uebersicht(
+  db: Database,
+  tz: string,
+  nowMs: number,
+  familyId: string | null,
+): KidUebersicht[] {
+  const kids = db
+    .query('SELECT * FROM kids WHERE family_id IS ? ORDER BY name COLLATE NOCASE;')
+    .all(familyId) as KidRow[];
   return kids.map((kid) => {
     const woche = aktivitaet(db, kid, tz, nowMs, 7);
     const heute = woche[woche.length - 1];

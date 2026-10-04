@@ -83,9 +83,32 @@ CREATE INDEX idx_sessions_subject ON auth_sessions(subject_type, subject_id);
 // Adds the optional free-text note on kids (used by Kids CRUD, #5).
 const KID_NOTIZ = `ALTER TABLE kids ADD COLUMN notiz TEXT;`;
 
+// Family tenancy (#12): admins and kids belong to a family; kids are only
+// visible inside their family. Backfill: existing single-family data gets one
+// family assigned (pure SQL so the runner stays string-based).
+const FAMILIES = `
+CREATE TABLE families (
+  id         TEXT PRIMARY KEY,
+  name       TEXT,
+  created_at INTEGER NOT NULL
+);
+ALTER TABLE admins ADD COLUMN family_id TEXT REFERENCES families(id);
+ALTER TABLE kids   ADD COLUMN family_id TEXT REFERENCES families(id);
+
+INSERT INTO families (id, name, created_at)
+SELECT lower(hex(randomblob(16))), 'Familie', CAST(strftime('%s','now') AS INTEGER) * 1000
+WHERE EXISTS (SELECT 1 FROM admins) OR EXISTS (SELECT 1 FROM kids);
+
+UPDATE admins SET family_id = (SELECT id FROM families LIMIT 1) WHERE family_id IS NULL;
+UPDATE kids   SET family_id = (SELECT id FROM families LIMIT 1) WHERE family_id IS NULL;
+
+CREATE INDEX idx_kids_family ON kids(family_id);
+`;
+
 export const migrations: readonly Migration[] = [
   { id: 1, name: 'init', up: INIT },
   { id: 2, name: 'kid_notiz', up: KID_NOTIZ },
+  { id: 3, name: 'families', up: FAMILIES },
 ];
 
 function userVersion(db: Database): number {

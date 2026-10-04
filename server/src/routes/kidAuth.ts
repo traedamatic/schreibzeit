@@ -10,8 +10,8 @@ import { hashSecret, verifySecret } from '../auth/password';
 import { createSession, deleteSession } from '../auth/sessions';
 import {
   clearPinFailures,
-  getKidById,
-  getKidByName,
+  getKidFuerFamilie,
+  getKidsByName,
   isKidLocked,
   recordPinFailure,
   setKidPinHash,
@@ -51,7 +51,7 @@ export function kidAuthRoutes(db: Database, config: Config) {
           set.status = 401;
           return { error: 'Not authenticated.' };
         }
-        const kid = getKidById(db, params.id);
+        const kid = getKidFuerFamilie(db, params.id, admin.family_id);
         if (!kid) {
           set.status = 404;
           return { error: 'Kid not found.' };
@@ -65,26 +65,32 @@ export function kidAuthRoutes(db: Database, config: Config) {
     .post(
       '/auth/kid-login',
       async ({ body, cookie, set }) => {
-        const kid = getKidByName(db, body.name);
-        // Generic message: don't confirm which names exist.
-        if (!kid || !kid.pin_hash) {
+        // Über Familien hinweg kann es Namensgleichheit geben — die PIN
+        // disambiguiert: geprüft wird gegen alle Namenstreffer, die nicht
+        // gesperrt sind. Fehlermeldung bleibt generisch (keine Enumeration).
+        const kandidaten = getKidsByName(db, body.name).filter((k) => k.pin_hash !== null);
+        if (kandidaten.length === 0) {
           set.status = 401;
           return { error: 'Wrong name or PIN.' };
         }
-        if (isKidLocked(kid)) {
+        const offen = kandidaten.filter((k) => !isKidLocked(k));
+        if (offen.length === 0) {
           set.status = 429;
           return { error: 'Too many tries. Wait a little and ask a grown-up.' };
         }
-        const ok = await verifySecret(body.pin, kid.pin_hash);
-        if (!ok) {
-          recordPinFailure(db, kid, MAX_PIN_FAILURES, PIN_LOCK_MS);
-          set.status = 401;
-          return { error: 'Wrong name or PIN.' };
+        for (const kid of offen) {
+          if (await verifySecret(body.pin, kid.pin_hash as string)) {
+            clearPinFailures(db, kid.id);
+            const token = createSession(db, 'kid', kid.id, config.SESSION_TTL_SECONDS);
+            cookie[KID_COOKIE]?.set({ value: token, ...cookieOptions });
+            return publicKid(kid);
+          }
         }
-        clearPinFailures(db, kid.id);
-        const token = createSession(db, 'kid', kid.id, config.SESSION_TTL_SECONDS);
-        cookie[KID_COOKIE]?.set({ value: token, ...cookieOptions });
-        return publicKid(kid);
+        // Falsche PIN: Fehlversuch bei allen offenen Namenstreffern zählen
+        // (pro-Kind-Lockout bleibt die Verteidigung gegen Raten).
+        for (const kid of offen) recordPinFailure(db, kid, MAX_PIN_FAILURES, PIN_LOCK_MS);
+        set.status = 401;
+        return { error: 'Wrong name or PIN.' };
       },
       {
         body: t.Object({

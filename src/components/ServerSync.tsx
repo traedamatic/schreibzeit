@@ -37,7 +37,7 @@ export function SyncStatusChip() {
   );
 }
 
-export function AdminAnmeldung() {
+export function AdminAnmeldung({ variante = 'schwebend' }: { variante?: 'schwebend' | 'zentriert' }) {
   const { angemeldet } = useSyncStore();
   const [modus, setModus] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
@@ -66,7 +66,13 @@ export function AdminAnmeldung() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[22rem] max-w-[calc(100vw-2rem)]">
+    <div
+      className={
+        variante === 'zentriert'
+          ? 'mx-auto w-[22rem] max-w-[calc(100vw-2rem)]'
+          : 'fixed bottom-4 right-4 z-50 w-[22rem] max-w-[calc(100vw-2rem)]'
+      }
+    >
       <form
         onSubmit={(e) => {
           e.preventDefault();

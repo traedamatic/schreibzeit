@@ -14,6 +14,7 @@ export interface CreateKidInput {
   notiz?: string | null;
   dailyGoalSeconds?: number;
   adminId?: string | null;
+  familyId?: string | null;
 }
 
 export interface UpdateKidInput {
@@ -27,19 +28,36 @@ export function getKidById(db: Database, id: string): KidRow | null {
   return db.query('SELECT * FROM kids WHERE id = ?;').get(id) as KidRow | null;
 }
 
-export function listKids(db: Database): KidRow[] {
-  return db.query('SELECT * FROM kids ORDER BY name COLLATE NOCASE;').all() as KidRow[];
+/**
+ * Kind für einen Admin auflösen: nur, wenn es zur Familie des Admins gehört.
+ * Fremde Familie → null (Routen antworten mit 404 und bestätigen nichts).
+ */
+export function getKidFuerFamilie(
+  db: Database,
+  id: string,
+  familyId: string | null,
+): KidRow | null {
+  const kid = getKidById(db, id);
+  if (!kid || kid.family_id !== familyId) return null;
+  return kid;
+}
+
+export function listKids(db: Database, familyId: string | null): KidRow[] {
+  return db
+    .query('SELECT * FROM kids WHERE family_id IS ? ORDER BY name COLLATE NOCASE;')
+    .all(familyId) as KidRow[];
 }
 
 export function createKid(db: Database, input: CreateKidInput): KidRow {
   const ts = now();
   const id = input.id ?? newId();
   db.query(
-    `INSERT INTO kids (id, admin_id, name, lernstand, daily_goal_seconds, notiz, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO kids (id, admin_id, family_id, name, lernstand, daily_goal_seconds, notiz, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     id,
     input.adminId ?? null,
+    input.familyId ?? null,
     input.name.trim(),
     input.lernstand,
     input.dailyGoalSeconds ?? DEFAULT_DAILY_GOAL_SECONDS,
@@ -69,11 +87,14 @@ export function deleteKid(db: Database, id: string): boolean {
   return db.query('DELETE FROM kids WHERE id = ?;').run(id).changes > 0;
 }
 
-/** Look up a kid by name, case-insensitively (single-family server). */
-export function getKidByName(db: Database, name: string): KidRow | null {
-  return db.query('SELECT * FROM kids WHERE lower(name) = lower(?);').get(name.trim()) as
-    | KidRow
-    | null;
+/**
+ * Alle Kinder mit diesem Namen (case-insensitiv) — über Familien hinweg kann
+ * es Namensgleichheit geben; die PIN-Prüfung disambiguiert beim Login.
+ */
+export function getKidsByName(db: Database, name: string): KidRow[] {
+  return db
+    .query('SELECT * FROM kids WHERE lower(name) = lower(?);')
+    .all(name.trim()) as KidRow[];
 }
 
 export function setKidPinHash(db: Database, id: string, pinHash: string): void {

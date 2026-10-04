@@ -5,7 +5,7 @@ import type { Database } from 'bun:sqlite';
 import type { Config } from '../config';
 import type { AdminRow } from '../types';
 import { adminContext } from '../auth/guards';
-import { countAdmins, createAdmin, getAdminByEmail } from '../auth/admins';
+import { countAdmins, createAdmin, createFamily, getAdminByEmail } from '../auth/admins';
 import { hashSecret, verifySecret } from '../auth/password';
 import { createSession, deleteSession } from '../auth/sessions';
 import { RateLimiter } from '../auth/rateLimit';
@@ -53,10 +53,15 @@ export function authRoutes(db: Database, config: Config) {
           set.status = 409;
           return { error: 'That email is already registered.' };
         }
+        // Familien-Zuordnung (#12): der erste Admin gründet die Familie;
+        // eingeladene Admins (admin-gated signup) treten der Familie des
+        // einladenden Admins bei.
+        const familyId = admin ? admin.family_id : createFamily(db).id;
         const row = createAdmin(db, {
           email: body.email,
           passwordHash: await hashSecret(body.password),
           displayName: body.displayName ?? null,
+          familyId,
         });
         const token = createSession(db, 'admin', row.id, config.SESSION_TTL_SECONDS);
         cookie[ADMIN_COOKIE]?.set({ value: token, ...cookieOptions });

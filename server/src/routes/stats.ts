@@ -3,7 +3,7 @@ import { Elysia } from 'elysia';
 import type { Database } from 'bun:sqlite';
 import type { Config } from '../config';
 import { adminContext, kidContext } from '../auth/guards';
-import { getKidById } from '../kids/data';
+import { getKidFuerFamilie } from '../kids/data';
 import { aktivitaet, schwacheWoerter, streak, uebersicht } from '../stats/data';
 import { now } from '../ids';
 import type { AdminRow, KidRow } from '../types';
@@ -24,7 +24,7 @@ export function statsRoutes(db: Database, config: Config) {
         set.status = denial;
         return { error: denial === 403 ? 'Forbidden.' : 'Not authenticated.' };
       }
-      return uebersicht(db, config.TZ, now());
+      return uebersicht(db, config.TZ, now(), admin?.family_id ?? null);
     })
     .get('/kids/:id/stats/activity', ({ params, query, admin, kid, set }) => {
       const denial = adminDenial(admin, kid);
@@ -32,7 +32,7 @@ export function statsRoutes(db: Database, config: Config) {
         set.status = denial;
         return { error: denial === 403 ? 'Forbidden.' : 'Not authenticated.' };
       }
-      const theKid = getKidById(db, params.id);
+      const theKid = getKidFuerFamilie(db, params.id, admin?.family_id ?? null);
       if (!theKid) {
         set.status = 404;
         return { error: 'Kid not found.' };
@@ -46,7 +46,7 @@ export function statsRoutes(db: Database, config: Config) {
         set.status = denial;
         return { error: denial === 403 ? 'Forbidden.' : 'Not authenticated.' };
       }
-      const theKid = getKidById(db, params.id);
+      const theKid = getKidFuerFamilie(db, params.id, admin?.family_id ?? null);
       if (!theKid) {
         set.status = 404;
         return { error: 'Kid not found.' };
@@ -59,7 +59,7 @@ export function statsRoutes(db: Database, config: Config) {
         set.status = denial;
         return { error: denial === 403 ? 'Forbidden.' : 'Not authenticated.' };
       }
-      if (!getKidById(db, params.id)) {
+      if (!getKidFuerFamilie(db, params.id, admin?.family_id ?? null)) {
         set.status = 404;
         return { error: 'Kid not found.' };
       }

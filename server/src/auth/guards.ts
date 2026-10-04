@@ -6,7 +6,7 @@ import { Elysia } from 'elysia';
 import type { Database } from 'bun:sqlite';
 import { getValidSession } from './sessions';
 import { getAdminById } from './admins';
-import { getKidById } from '../kids/data';
+import { getKidById, getKidFuerFamilie } from '../kids/data';
 import { ADMIN_COOKIE, KID_COOKIE } from './constants';
 import type { AdminRow, KidRow } from '../types';
 
@@ -44,16 +44,30 @@ export function kidOwns(kid: KidRow | null, kidId: string): boolean {
 }
 
 /**
- * Authorize access to a kid-scoped resource: allowed for any admin, or the
- * owning kid. Returns 0 when allowed, else the HTTP status to respond with
- * (401 = no session, 403 = wrong kid).
+ * Zugriff auf eine Kind-Ressource auflösen (#12, familien-begrenzt):
+ *  - Admin: nur Kinder der eigenen Familie; fremde/unbekannte → 404
+ *    (Existenz wird nicht bestätigt)
+ *  - Kind-Session: nur das eigene Kind (fremdes → 403, keine Session → 401)
+ * Liefert bei Erfolg die Kind-Zeile, sonst den HTTP-Status.
  */
-export function accessDenial(
+export function kidZugriff(
+  db: Database,
   admin: AdminRow | null,
-  kid: KidRow | null,
+  kidSession: KidRow | null,
   kidId: string,
-): 0 | 401 | 403 {
-  if (admin) return 0;
-  if (!kid) return 401;
-  return kidOwns(kid, kidId) ? 0 : 403;
+): { kid: KidRow } | { status: 401 | 403 | 404 } {
+  if (admin) {
+    const kid = getKidFuerFamilie(db, kidId, admin.family_id);
+    return kid ? { kid } : { status: 404 };
+  }
+  if (!kidSession) return { status: 401 };
+  if (!kidOwns(kidSession, kidId)) return { status: 403 };
+  return { kid: kidSession };
+}
+
+/** Fehlertext zum Status aus {@link kidZugriff}. */
+export function zugriffsFehler(status: 401 | 403 | 404): { error: string } {
+  if (status === 401) return { error: 'Not authenticated.' };
+  if (status === 403) return { error: 'Forbidden.' };
+  return { error: 'Kid not found.' };
 }

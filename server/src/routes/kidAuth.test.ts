@@ -3,7 +3,6 @@ import { createApp } from '../app';
 import { openDatabase } from '../db';
 import { runMigrations } from '../migrations';
 import { loadConfig } from '../config';
-import { newId, now } from '../ids';
 
 const BASE = 'http://localhost';
 
@@ -22,15 +21,15 @@ async function setup() {
   );
   const adminCookie = (signup.headers.get('set-cookie') ?? '').split(';')[0] ?? '';
 
-  const kidId = newId();
-  const t = now();
-  db.query('INSERT INTO kids (id, name, lernstand, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(
-    kidId,
-    'Lina',
-    'klasse2',
-    t,
-    t,
+  // Kind über die API anlegen, damit es zur Familie des Admins gehört (#12).
+  const kidRes = await app.handle(
+    new Request(`${BASE}/api/kids`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: adminCookie },
+      body: JSON.stringify({ name: 'Lina', lernstand: 'klasse2' }),
+    }),
   );
+  const kidId = ((await kidRes.json()) as { id: string }).id;
   return { app, db, adminCookie, kidId };
 }
 

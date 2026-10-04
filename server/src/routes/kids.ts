@@ -1,12 +1,12 @@
-// Admin-only Kids CRUD. Family-only: all admins co-manage all kids, so routes
-// gate on "is an admin", not per-admin ownership (see CLAUDE.md / #5).
+// Admin-only Kids CRUD, auf die Familie des Admins begrenzt (#12): alle Admins
+// derselben Familie verwalten dieselben Kinder; fremde Familien erhalten 404.
 import { Elysia, t } from 'elysia';
 import type { Database } from 'bun:sqlite';
 import { adminContext } from '../auth/guards';
 import {
   createKid,
   deleteKid,
-  getKidById,
+  getKidFuerFamilie,
   listKids,
   updateKid,
 } from '../kids/data';
@@ -43,9 +43,10 @@ export function kidsRoutes(db: Database) {
           set.status = 400;
           return { error: goalError };
         }
-        // Idempotent offline-sync replay: a resent create with a known id is a no-op.
+        // Idempotent offline-sync replay: a resent create with a known id is a
+        // no-op — aber nur innerhalb der eigenen Familie.
         if (body.id) {
-          const existing = getKidById(db, body.id);
+          const existing = getKidFuerFamilie(db, body.id, admin.family_id);
           if (existing) return toPublicKid(existing);
         }
         const kid = createKid(db, {
@@ -55,6 +56,7 @@ export function kidsRoutes(db: Database) {
           notiz: body.notiz ?? null,
           dailyGoalSeconds: body.dailyGoalSeconds,
           adminId: admin.id,
+          familyId: admin.family_id,
         });
         set.status = 201;
         return toPublicKid(kid);
@@ -74,14 +76,14 @@ export function kidsRoutes(db: Database) {
         set.status = 401;
         return { error: 'Not authenticated.' };
       }
-      return listKids(db).map(toPublicKid);
+      return listKids(db, admin.family_id).map(toPublicKid);
     })
     .get('/:id', ({ params, admin, set }) => {
       if (!admin) {
         set.status = 401;
         return { error: 'Not authenticated.' };
       }
-      const kid = getKidById(db, params.id);
+      const kid = getKidFuerFamilie(db, params.id, admin.family_id);
       if (!kid) {
         set.status = 404;
         return { error: 'Kid not found.' };
@@ -103,6 +105,10 @@ export function kidsRoutes(db: Database) {
         if (goalError) {
           set.status = 400;
           return { error: goalError };
+        }
+        if (!getKidFuerFamilie(db, params.id, admin.family_id)) {
+          set.status = 404;
+          return { error: 'Kid not found.' };
         }
         const kid = updateKid(db, params.id, {
           name: body.name,
@@ -130,11 +136,11 @@ export function kidsRoutes(db: Database) {
         set.status = 401;
         return { error: 'Not authenticated.' };
       }
-      const ok = deleteKid(db, params.id);
-      if (!ok) {
+      if (!getKidFuerFamilie(db, params.id, admin.family_id)) {
         set.status = 404;
         return { error: 'Kid not found.' };
       }
+      deleteKid(db, params.id);
       return { ok: true };
     });
 }

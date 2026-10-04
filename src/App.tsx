@@ -19,6 +19,7 @@ import {
   IconUsers,
 } from './components/icons';
 import { istRemoteAktiv } from './services/api';
+import { useSyncStore } from './services/serverSync';
 import { useEinstellungen, useKinder, useKlassen } from './state/hooks';
 import { displayName, useUiStore, type TabId } from './state/store';
 import { repository } from './db/repository';
@@ -90,6 +91,26 @@ export default function App() {
   }, [kinder, selectedKindId, setSelectedKind]);
 
   const kind = kinder.find((k) => k.id === selectedKindId);
+
+  // Auth-Gate im Server-Betrieb (#12): Bei bestätigter Abmeldung (401) keine
+  // gecachten Kinderdaten zeigen — nur die Anmeldung. `angemeldet === null`
+  // (Server nicht erreichbar/Status unbekannt) bleibt offline-first nutzbar.
+  const { angemeldet } = useSyncStore();
+  if (istRemoteAktiv() && angemeldet === false) {
+    return (
+      <div className="flex min-h-[100dvh] flex-col bg-paper-100">
+        <header className="flex items-center gap-3 border-b border-paper-200 bg-paper-50 px-4 py-3">
+          <h1 className="font-serif text-xl font-semibold text-ink">{t.app.name}</h1>
+          <div className="ml-auto">
+            <SyncStatusChip />
+          </div>
+        </header>
+        <main className="flex flex-1 items-center justify-center px-4">
+          <AdminAnmeldung variante="zentriert" />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <>

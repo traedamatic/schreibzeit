@@ -1,10 +1,10 @@
 // Practice API: submit a run (records events + advances SRS), read due words,
-// and read today's time-vs-goal summary. Accessible to the owning kid or an admin.
+// and read today's time-vs-goal summary. Zugriff: das eigene Kind oder ein
+// Admin derselben Familie (#12 — fremde Familien sehen 404).
 import { Elysia, t } from 'elysia';
 import type { Database } from 'bun:sqlite';
 import type { Config } from '../config';
-import { accessDenial, adminContext, kidContext } from '../auth/guards';
-import { getKidById } from '../kids/data';
+import { adminContext, kidContext, kidZugriff, zugriffsFehler } from '../auth/guards';
 import { toPublicWord } from '../words/public';
 import {
   PracticeError,
@@ -22,19 +22,15 @@ export function practiceRoutes(db: Database, config: Config) {
     .post(
       '/kids/:id/practice',
       ({ params, body, admin, kid, set }) => {
-        const denial = accessDenial(admin, kid, params.id);
-        if (denial) {
-          set.status = denial;
-          return { error: denial === 401 ? 'Not authenticated.' : 'Forbidden.' };
-        }
-        if (!getKidById(db, params.id)) {
-          set.status = 404;
-          return { error: 'Kid not found.' };
+        const zugriff = kidZugriff(db, admin, kid, params.id);
+        if ('status' in zugriff) {
+          set.status = zugriff.status;
+          return zugriffsFehler(zugriff.status);
         }
         try {
           const result = recordSession(
             db,
-            params.id,
+            zugriff.kid.id,
             body.sessionId,
             body.events.map((e) => ({
               wordId: e.wordId,
@@ -72,25 +68,20 @@ export function practiceRoutes(db: Database, config: Config) {
       },
     )
     .get('/kids/:id/practice/due', ({ params, admin, kid, set }) => {
-      const denial = accessDenial(admin, kid, params.id);
-      if (denial) {
-        set.status = denial;
-        return { error: denial === 401 ? 'Not authenticated.' : 'Forbidden.' };
+      const zugriff = kidZugriff(db, admin, kid, params.id);
+      if ('status' in zugriff) {
+        set.status = zugriff.status;
+        return zugriffsFehler(zugriff.status);
       }
-      return getDueWords(db, params.id, now()).map(toPublicWord);
+      return getDueWords(db, zugriff.kid.id, now()).map(toPublicWord);
     })
     .get('/kids/:id/practice/today', ({ params, admin, kid, set }) => {
-      const denial = accessDenial(admin, kid, params.id);
-      if (denial) {
-        set.status = denial;
-        return { error: denial === 401 ? 'Not authenticated.' : 'Forbidden.' };
-      }
-      const theKid = getKidById(db, params.id);
-      if (!theKid) {
-        set.status = 404;
-        return { error: 'Kid not found.' };
+      const zugriff = kidZugriff(db, admin, kid, params.id);
+      if ('status' in zugriff) {
+        set.status = zugriff.status;
+        return zugriffsFehler(zugriff.status);
       }
       const startMs = startOfDayMs(config.TZ, now());
-      return getTodaySummary(db, params.id, theKid.daily_goal_seconds, startMs);
+      return getTodaySummary(db, zugriff.kid.id, zugriff.kid.daily_goal_seconds, startMs);
     });
 }

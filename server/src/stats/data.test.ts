@@ -115,7 +115,7 @@ describe('uebersicht', () => {
     event(w1, true, 300, JETZT - 1000); // heute Ziel erfüllt
     event(w2, true, 120, JETZT - TAG); // gestern unter Ziel
 
-    const [zeile] = uebersicht(db, TZ, JETZT);
+    const [zeile] = uebersicht(db, TZ, JETZT, null);
     expect(zeile?.kid.name).toBe('Lina');
     expect(zeile?.today).toEqual({ secondsPracticed: 300, goalMet: true });
     expect(zeile?.streak).toBe(1);
@@ -129,7 +129,7 @@ describe('uebersicht', () => {
 
   it('rendert ein Kind ohne jede Übung mit Null-Werten', () => {
     const { db } = setup();
-    const [zeile] = uebersicht(db, TZ, JETZT);
+    const [zeile] = uebersicht(db, TZ, JETZT, null);
     expect(zeile?.today).toEqual({ secondsPracticed: 0, goalMet: false });
     expect(zeile?.streak).toBe(0);
     expect(zeile?.masteryPct).toBe(0);
