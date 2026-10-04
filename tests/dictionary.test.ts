@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { lookupWort, woerterbuchSilben } from '@/services/dictionary';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { ladeWoerterbuch, lookupWort, woerterbuchSilben } from '@/services/dictionary';
 import { GERMAN_NOUNS } from '@/data/germanNouns';
 
 describe('woerterbuchSilben (Wörterbuch-Trennung)', () => {
@@ -39,8 +39,51 @@ describe('lookupWort', () => {
     expect(info.artikel).toBe('');
   });
 
+  it('gibt für beste keinen Artikel zurück', () => {
+    const info = lookupWort('beste');
+    expect(info.artikelGefunden).toBe(false);
+    expect(info.artikel).toBe('');
+  });
+
   it('liefert Merkstellen mit', () => {
     expect(lookupWort('Sommer').merkstellen).toEqual([2, 3]);
+  });
+});
+
+describe('Artikel aus dem großen Wörterbuch (Groß-/Kleinschreibung, #13)', () => {
+  beforeAll(async () => {
+    // Das große Wiktionary-Wörterbuch enthält substantivierte Verben und
+    // Zahlwörter mit kleingeschriebenen Schlüsseln — genau die Fehlerquelle.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({ sieben: 'die', essen: 'das', laufen: 'das', beste: 'die' }),
+            { status: 200, headers: { 'content-type': 'application/json' } },
+          ),
+        ),
+      ),
+    );
+    await ladeWoerterbuch();
+  });
+
+  it('kleingeschriebene Nicht-Nomen bekommen KEINEN Artikel (sieben, essen, laufen, beste)', () => {
+    for (const w of ['sieben', 'essen', 'laufen', 'beste']) {
+      const info = lookupWort(w);
+      expect(info.artikelGefunden, w).toBe(false);
+      expect(info.artikel, w).toBe('');
+    }
+  });
+
+  it('großgeschriebene Eingaben werden weiterhin nachgeschlagen (Sieben → die, Essen → das)', () => {
+    expect(lookupWort('Sieben').artikel).toBe('die');
+    expect(lookupWort('Essen').artikel).toBe('das');
+  });
+
+  it('kuratierte Liste bleibt case-insensitiv (katze → die)', () => {
+    expect(lookupWort('katze').artikel).toBe('die');
+    expect(lookupWort('Katze').artikel).toBe('die');
   });
 });
 

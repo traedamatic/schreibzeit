@@ -34,9 +34,21 @@ export function ladeWoerterbuch(): Promise<void> {
 }
 
 function findeArtikel(wort: string): Artikel | undefined {
-  const key = wort.trim().toLowerCase();
-  // Kuratierte Liste hat Vorrang (geprüfte Grundschul-Wörter), dann das große Wörterbuch.
-  return GERMAN_NOUNS[key] ?? grossesWoerterbuch?.[key];
+  const trimmed = wort.trim();
+  const key = trimmed.toLowerCase();
+  // Kuratierte Liste hat Vorrang (geprüfte, reine Nomen-Liste für die
+  // Grundschule) — sie darf case-insensitiv matchen („hund" → der).
+  const kuratiert = GERMAN_NOUNS[key];
+  if (kuratiert) return kuratiert;
+  // Das große Wiktionary-Wörterbuch enthält auch substantivierte Verben und
+  // Zahlwörter (sieben → die Sieben, essen → das Essen). Kleingeschriebene
+  // Eingaben sind im Deutschen keine Nomen-Schreibweise — nur bei
+  // großgeschriebenem Wortanfang nachschlagen, sonst keinen Artikel raten.
+  const erstesZeichen = trimmed[0];
+  const istGrossgeschrieben =
+    erstesZeichen !== undefined && erstesZeichen === erstesZeichen.toLocaleUpperCase('de');
+  if (!istGrossgeschrieben) return undefined;
+  return grossesWoerterbuch?.[key];
 }
 
 export interface WortInfo {
