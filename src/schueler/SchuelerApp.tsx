@@ -237,6 +237,7 @@ export function SchuelerApp() {
           <Startkarte
             heute={heute}
             faellig={faellig.length}
+            nurNomen={profil?.uebungsModus === 'nomen'}
             onStart={starten}
           />
         )}
@@ -247,6 +248,7 @@ export function SchuelerApp() {
             gesamt={runde.length}
             restSekunden={aktuelleRestSekunden}
             bonus={bonusRundeRef.current}
+            nurNomen={profil?.uebungsModus === 'nomen'}
             phase={phase}
             onAbdecken={() => setPhase('schreiben')}
             onAufdecken={() => setPhase('pruefen')}
@@ -341,10 +343,12 @@ function Anmeldekarte({ onAngemeldet }: { onAngemeldet: (p: ServerSchueler) => P
 function Startkarte({
   heute,
   faellig,
+  nurNomen,
   onStart,
 }: {
   heute: HeuteStand;
   faellig: number;
+  nurNomen: boolean;
   onStart: () => void;
 }) {
   const rest = Math.max(0, heute.goalSeconds - heute.secondsToday);
@@ -354,6 +358,11 @@ function Startkarte({
       <h2 className="mt-3 font-serif text-xl font-semibold text-ink">
         {heute.goalMet ? 'Ziel für heute geschafft!' : 'Deine Schreibzeit'}
       </h2>
+      {nurNomen && (
+        <p className="mt-2 inline-block rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-600">
+          🔠 Großschreibung üben — heute nur Nomen
+        </p>
+      )}
       <div className="mt-4 flex justify-center gap-6 text-sm text-ink-soft">
         <span>
           <span className="block text-2xl font-semibold text-ink">{formatZeit(heute.secondsToday)}</span>
@@ -394,6 +403,7 @@ function Uebungskarte({
   gesamt,
   restSekunden,
   bonus,
+  nurNomen,
   phase,
   onAbdecken,
   onAufdecken,
@@ -404,6 +414,7 @@ function Uebungskarte({
   gesamt: number;
   restSekunden: number;
   bonus: boolean;
+  nurNomen: boolean;
   phase: Phase;
   onAbdecken: () => void;
   onAufdecken: () => void;
@@ -456,6 +467,11 @@ function Uebungskarte({
         {phase === 'schreiben' && 'Fertig geschrieben? Dann vergleiche.'}
         {phase === 'pruefen' && 'Hast du es richtig geschrieben?'}
       </p>
+      {nurNomen && (
+        <p className="mt-2 text-center text-xs font-medium text-brand-600">
+          🔠 Merke: Nomen schreibt man groß!
+        </p>
+      )}
 
       <div className="mt-5 flex flex-wrap justify-center gap-3">
         {phase === 'anschauen' && (

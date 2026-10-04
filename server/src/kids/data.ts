@@ -1,7 +1,7 @@
 // Kid data access. Auth-related helpers (#4) live here; #5 extends this module
 // with create/list/update/delete.
 import type { Database } from 'bun:sqlite';
-import type { KidRow, Lernstand } from '../types';
+import type { KidRow, Lernstand, UebungsModus } from '../types';
 import { newId, now } from '../ids';
 
 export const DEFAULT_DAILY_GOAL_SECONDS = 300;
@@ -22,6 +22,7 @@ export interface UpdateKidInput {
   lernstand?: Lernstand;
   notiz?: string | null;
   dailyGoalSeconds?: number;
+  uebungsModus?: UebungsModus;
 }
 
 export function getKidById(db: Database, id: string): KidRow | null {
@@ -77,9 +78,10 @@ export function updateKid(db: Database, id: string, patch: UpdateKidInput): KidR
   const lernstand = patch.lernstand ?? kid.lernstand;
   const notiz = patch.notiz !== undefined ? patch.notiz : kid.notiz;
   const goal = patch.dailyGoalSeconds ?? kid.daily_goal_seconds;
+  const modus = patch.uebungsModus ?? kid.uebungs_modus;
   db.query(
-    'UPDATE kids SET name = ?, lernstand = ?, notiz = ?, daily_goal_seconds = ?, updated_at = ? WHERE id = ?;',
-  ).run(name, lernstand, notiz, goal, now(), id);
+    'UPDATE kids SET name = ?, lernstand = ?, notiz = ?, daily_goal_seconds = ?, uebungs_modus = ?, updated_at = ? WHERE id = ?;',
+  ).run(name, lernstand, notiz, goal, modus, now(), id);
   return getKidById(db, id);
 }
 

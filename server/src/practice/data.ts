@@ -2,7 +2,7 @@
 // records one practice_event per word attempt with its duration. Idempotent on
 // repeated (session_id, word_id) so offline-sync retries can't double-apply.
 import type { Database } from 'bun:sqlite';
-import type { WordRow } from '../types';
+import type { UebungsModus, WordRow } from '../types';
 import { getWordById } from '../words/data';
 import { naechsterStand } from '../srs';
 import { newId, now } from '../ids';
@@ -31,11 +31,22 @@ export interface RecordResult {
   skipped: number;
 }
 
-/** Words currently due for a kid (SRS: faellig_am ≤ now), oldest first. */
-export function getDueWords(db: Database, kidId: string, nowMs: number): WordRow[] {
+/**
+ * Words currently due for a kid (SRS: faellig_am ≤ now), oldest first.
+ * Im Übungsmodus 'nomen' (#15) werden nur Nomen geliefert: Artikel der/die/das
+ * oder wortart 'Nomen'.
+ */
+export function getDueWords(
+  db: Database,
+  kidId: string,
+  nowMs: number,
+  modus: UebungsModus = 'alle',
+): WordRow[] {
+  const nomenFilter =
+    modus === 'nomen' ? " AND (artikel IN ('der','die','das') OR lower(wortart) = 'nomen')" : '';
   return db
     .query(
-      'SELECT * FROM words WHERE kid_id = ? AND faellig_am IS NOT NULL AND faellig_am <= ? ORDER BY faellig_am ASC;',
+      `SELECT * FROM words WHERE kid_id = ? AND faellig_am IS NOT NULL AND faellig_am <= ?${nomenFilter} ORDER BY faellig_am ASC;`,
     )
     .all(kidId, nowMs) as WordRow[];
 }

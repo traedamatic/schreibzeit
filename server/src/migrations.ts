@@ -105,10 +105,14 @@ UPDATE kids   SET family_id = (SELECT id FROM families LIMIT 1) WHERE family_id 
 CREATE INDEX idx_kids_family ON kids(family_id);
 `;
 
+// Übungsmodus pro Kind (#15): 'alle' (Standard) | 'nomen' (Großschreibung).
+const UEBUNGS_MODUS = `ALTER TABLE kids ADD COLUMN uebungs_modus TEXT NOT NULL DEFAULT 'alle';`;
+
 export const migrations: readonly Migration[] = [
   { id: 1, name: 'init', up: INIT },
   { id: 2, name: 'kid_notiz', up: KID_NOTIZ },
   { id: 3, name: 'families', up: FAMILIES },
+  { id: 4, name: 'uebungs_modus', up: UEBUNGS_MODUS },
 ];
 
 function userVersion(db: Database): number {

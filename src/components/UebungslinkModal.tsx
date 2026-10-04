@@ -3,13 +3,18 @@
 // meldet sich dort mit Name + PIN am Familien-Server an; Wörter und
 // Fortschritt kommen vom Server (beide Haushalte sehen denselben Stand).
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal } from './ui';
 import { IconCheck, IconCopy, IconLink } from './icons';
 import { baueSchuelerLink } from '@/core/uebenLink';
-import { ApiError, istRemoteAktiv, kidsApi } from '@/services/api';
+import { ApiError, istRemoteAktiv, kidsApi, type UebungsModus } from '@/services/api';
 import { displayName } from '@/state/store';
 import type { Einstellungen, Kind, Lernwort } from '@/types';
+
+const MODUS_OPTIONEN: { wert: UebungsModus; label: string }[] = [
+  { wert: 'alle', label: 'Alle Wörter' },
+  { wert: 'nomen', label: 'Nur Nomen (Großschreibung)' },
+];
 
 export function UebungslinkModal({
   offen,
@@ -27,9 +32,42 @@ export function UebungslinkModal({
   const [kopiert, setKopiert] = useState(false);
   const [pin, setPin] = useState('');
   const [pinStatus, setPinStatus] = useState<'leer' | 'sendet' | 'ok' | string>('leer');
+  const [modus, setModus] = useState<UebungsModus | null>(null);
+  const [modusFehler, setModusFehler] = useState<string | null>(null);
 
   const link = useMemo(() => baueSchuelerLink(), []);
   const anzeigename = displayName(kind.name, einstellungen.nurInitialen);
+
+  // Aktuellen Übungsmodus vom Server laden (#15).
+  useEffect(() => {
+    if (!offen || !istRemoteAktiv()) return;
+    let aktiv = true;
+    kidsApi
+      .get(kind.id)
+      .then((k) => {
+        if (aktiv) setModus(k.uebungsModus);
+      })
+      .catch(() => {
+        if (aktiv) setModusFehler('Übungsmodus konnte nicht geladen werden.');
+      });
+    return () => {
+      aktiv = false;
+    };
+  }, [offen, kind.id]);
+
+  async function modusSpeichern(neu: UebungsModus) {
+    const vorher = modus;
+    setModus(neu);
+    setModusFehler(null);
+    try {
+      await kidsApi.update(kind.id, { uebungsModus: neu });
+    } catch (error) {
+      setModus(vorher);
+      setModusFehler(
+        error instanceof ApiError ? error.message : 'Übungsmodus konnte nicht gespeichert werden.',
+      );
+    }
+  }
 
   async function kopieren() {
     try {
@@ -99,6 +137,31 @@ export function UebungslinkModal({
               )}
             </button>
           </div>
+        </div>
+
+        <div>
+          <label className="label" htmlFor="ueben-modus">
+            Übungsmodus
+          </label>
+          <select
+            id="ueben-modus"
+            className="input max-w-xs"
+            value={modus ?? 'alle'}
+            disabled={modus === null}
+            onChange={(e) => void modusSpeichern(e.target.value as UebungsModus)}
+          >
+            {MODUS_OPTIONEN.map((o) => (
+              <option key={o.wert} value={o.wert}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          {modusFehler && <p className="mt-1 text-xs text-red-600">{modusFehler}</p>}
+          {modus === 'nomen' && (
+            <p className="mt-1 text-xs text-ink-faint">
+              Das Kind übt nur Nomen — Merksatz „Nomen schreibt man groß!" wird angezeigt.
+            </p>
+          )}
         </div>
 
         <div>

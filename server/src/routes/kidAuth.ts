@@ -28,6 +28,7 @@ function publicKid(kid: KidRow) {
     name: kid.name,
     lernstand: kid.lernstand,
     dailyGoalSeconds: kid.daily_goal_seconds,
+    uebungsModus: kid.uebungs_modus,
   };
 }
 

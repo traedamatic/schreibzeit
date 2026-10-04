@@ -11,10 +11,19 @@ import {
   updateKid,
 } from '../kids/data';
 import { toPublicKid } from '../kids/public';
-import { LERNSTAND_VALUES, type Lernstand } from '../types';
+import {
+  LERNSTAND_VALUES,
+  UEBUNGS_MODUS_VALUES,
+  type Lernstand,
+  type UebungsModus,
+} from '../types';
 
 function isLernstand(value: string): value is Lernstand {
   return (LERNSTAND_VALUES as readonly string[]).includes(value);
+}
+
+function isUebungsModus(value: string): value is UebungsModus {
+  return (UEBUNGS_MODUS_VALUES as readonly string[]).includes(value);
 }
 
 /** Returns an error string if dailyGoalSeconds is present but invalid. */
@@ -101,6 +110,10 @@ export function kidsRoutes(db: Database) {
           set.status = 400;
           return { error: 'Invalid lernstand.' };
         }
+        if (body.uebungsModus !== undefined && !isUebungsModus(body.uebungsModus)) {
+          set.status = 400;
+          return { error: 'Invalid uebungsModus.' };
+        }
         const goalError = badGoal(body.dailyGoalSeconds);
         if (goalError) {
           set.status = 400;
@@ -115,6 +128,7 @@ export function kidsRoutes(db: Database) {
           lernstand: body.lernstand as Lernstand | undefined,
           notiz: body.notiz,
           dailyGoalSeconds: body.dailyGoalSeconds,
+          uebungsModus: body.uebungsModus as UebungsModus | undefined,
         });
         if (!kid) {
           set.status = 404;
@@ -128,6 +142,7 @@ export function kidsRoutes(db: Database) {
           lernstand: t.Optional(t.String()),
           notiz: t.Optional(t.Union([t.String({ maxLength: 2000 }), t.Null()])),
           dailyGoalSeconds: t.Optional(t.Integer()),
+          uebungsModus: t.Optional(t.String({ maxLength: 20 })),
         }),
       },
     )

@@ -6,7 +6,13 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { SchuelerApp } from '@/schueler/SchuelerApp';
 import type { HeuteStand, ServerWort } from '@/services/api';
 
-const profil = { id: 'k1', name: 'Lina', lernstand: 'klasse2', dailyGoalSeconds: 300 };
+const profil = {
+  id: 'k1',
+  name: 'Lina',
+  lernstand: 'klasse2',
+  dailyGoalSeconds: 300,
+  uebungsModus: 'alle',
+};
 
 const wort = (id: string, text: string): ServerWort => ({
   id,

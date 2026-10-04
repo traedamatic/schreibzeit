@@ -9,6 +9,9 @@
 
 import type { Lernstand, WortStatus } from '@/types';
 
+/** Übungsart eines Kindes (#15): alles üben oder nur Nomen (Großschreibung). */
+export type UebungsModus = 'alle' | 'nomen';
+
 /** Server-Repräsentation eines Kindes (camelCase, vom Server geliefert). */
 export interface ServerKind {
   id: string;
@@ -16,6 +19,7 @@ export interface ServerKind {
   lernstand: Lernstand;
   notiz: string | null;
   dailyGoalSeconds: number;
+  uebungsModus: UebungsModus;
   createdAt: number;
   updatedAt: number;
 }
@@ -50,6 +54,7 @@ export interface ServerSchueler {
   name: string;
   lernstand: Lernstand;
   dailyGoalSeconds: number;
+  uebungsModus: UebungsModus;
 }
 
 /** Tages-Stand gegen das Übungsziel (GET …/practice/today). */
@@ -141,10 +146,19 @@ export const adminApi = {
 
 export const kidsApi = {
   list: () => request<ServerKind[]>('GET', '/kids'),
+  get: (id: string) => request<ServerKind>('GET', `/kids/${id}`),
   create: (input: { id?: string; name: string; lernstand: Lernstand; notiz?: string }) =>
     request<ServerKind>('POST', '/kids/', input),
-  update: (id: string, patch: { name?: string; lernstand?: Lernstand; notiz?: string | null }) =>
-    request<ServerKind>('PUT', `/kids/${id}`, patch),
+  update: (
+    id: string,
+    patch: {
+      name?: string;
+      lernstand?: Lernstand;
+      notiz?: string | null;
+      dailyGoalSeconds?: number;
+      uebungsModus?: UebungsModus;
+    },
+  ) => request<ServerKind>('PUT', `/kids/${id}`, patch),
   remove: (id: string) => request<{ ok: boolean }>('DELETE', `/kids/${id}`),
   setPin: (id: string, pin: string) => request<{ ok: boolean }>('PUT', `/kids/${id}/pin`, { pin }),
 };

@@ -73,7 +73,7 @@ export function practiceRoutes(db: Database, config: Config) {
         set.status = zugriff.status;
         return zugriffsFehler(zugriff.status);
       }
-      return getDueWords(db, zugriff.kid.id, now()).map(toPublicWord);
+      return getDueWords(db, zugriff.kid.id, now(), zugriff.kid.uebungs_modus).map(toPublicWord);
     })
     .get('/kids/:id/practice/today', ({ params, admin, kid, set }) => {
       const zugriff = kidZugriff(db, admin, kid, params.id);

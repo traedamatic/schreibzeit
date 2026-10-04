@@ -9,6 +9,7 @@ export function toPublicKid(k: KidRow) {
     lernstand: k.lernstand,
     notiz: k.notiz,
     dailyGoalSeconds: k.daily_goal_seconds,
+    uebungsModus: k.uebungs_modus,
     createdAt: k.created_at,
     updatedAt: k.updated_at,
   };

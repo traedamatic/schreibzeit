@@ -18,6 +18,10 @@ export const LERNSTAND_VALUES: readonly Lernstand[] = [
 export const WORT_STATUS_VALUES: readonly WortStatus[] = ['neu', 'wird_geuebt', 'sitzt'];
 export const ARTIKEL_VALUES: readonly Artikel[] = ['der', 'die', 'das', ''];
 
+/** Übungsart eines Kindes (#15): alles üben oder nur Nomen (Großschreibung). */
+export type UebungsModus = 'alle' | 'nomen';
+export const UEBUNGS_MODUS_VALUES: readonly UebungsModus[] = ['alle', 'nomen'];
+
 export interface FamilyRow {
   id: string;
   name: string | null;
@@ -47,6 +51,8 @@ export interface KidRow {
   notiz: string | null;
   /** Daily practice time goal in seconds (default 300 = 5 min). */
   daily_goal_seconds: number;
+  /** Übungsart (#15): 'alle' | 'nomen'. */
+  uebungs_modus: UebungsModus;
   pin_failed_count: number;
   pin_locked_until: number | null;
   created_at: number;
