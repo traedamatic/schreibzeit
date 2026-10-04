@@ -1,9 +1,12 @@
-// Teilbarer Übungslink pro Kind.
+// Einstieg in den Schüler-Übungsmodus über den URL-Anker `#ueben`.
 //
-// Schreibzeit ist server-/kontenlos (alle Daten liegen lokal). Damit ein Kind
-// auf einem beliebigen Gerät offline üben kann, werden seine Lernwörter direkt
-// in den Link codiert (im Anker `#ueben=…`). Der Link enthält nur die Wörter
-// (+ Anzeigename) – es wird nichts hochgeladen.
+// Aktuell: der Link ist ein reiner Einstiegspunkt (`…#ueben`) — das Kind
+// meldet sich dort mit Name + PIN am Familien-Server an; Wörter und
+// Lernfortschritt kommen vom Server (beide Haushalte sehen denselben Stand).
+//
+// Altbestand: früher waren die Wörter direkt im Anker codiert (`#ueben=…`,
+// serverlos). Solche Links werden weiterhin erkannt, aber nur noch mit dem
+// Hinweis beantwortet, dass sie veraltet sind (Decoder bleibt dafür erhalten).
 //
 // Reine Funktionen, keine DOM-/DB-Abhängigkeit (Basis-URL wird übergeben).
 
@@ -29,6 +32,7 @@ export interface UebenPaket {
   woerter: UebenWort[];
 }
 
+const HASH_SCHUELER = '#ueben';
 const HASH_PRAEFIX = '#ueben=';
 
 function bytesToBase64Url(bytes: Uint8Array): string {
@@ -74,35 +78,23 @@ export function decodeUebenPaket(code: string): UebenPaket | null {
   }
 }
 
-/** Vollständiger Link (Basis-URL + codiertes Paket im Anker). */
-export function baueUebenLink(
-  paket: UebenPaket,
-  basis: string = `${location.origin}${location.pathname}`,
-): string {
-  return `${basis}${HASH_PRAEFIX}${encodeUebenPaket(paket)}`;
+/** Teilbarer Schüler-Link (Einstieg in den Übungsmodus, Anmeldung per PIN). */
+export function baueSchuelerLink(basis: string = `${location.origin}${location.pathname}`): string {
+  return `${basis}${HASH_SCHUELER}`;
 }
 
-/** True, wenn die aktuelle URL ein Schüler-Übungslink ist. */
+/** True, wenn die URL den Schüler-Client öffnen soll (neu `#ueben`, alt `#ueben=…`). */
 export function istUebenHash(hash: string = location.hash): boolean {
+  return hash === HASH_SCHUELER || hash.startsWith(HASH_PRAEFIX);
+}
+
+/** True für einen veralteten Link mit im Anker codierten Wörtern. */
+export function istLegacyUebenHash(hash: string = location.hash): boolean {
   return hash.startsWith(HASH_PRAEFIX);
 }
 
-/** Übungspaket aus dem URL-Anker lesen (oder `null`). */
+/** Übungspaket aus einem veralteten URL-Anker lesen (oder `null`). */
 export function leseUebenPaketAusHash(hash: string = location.hash): UebenPaket | null {
-  if (!istUebenHash(hash)) return null;
+  if (!istLegacyUebenHash(hash)) return null;
   return decodeUebenPaket(hash.slice(HASH_PRAEFIX.length));
-}
-
-/**
- * Stabiler localStorage-Schlüssel für den Übungsfortschritt eines Links.
- * Aus dem codierten Paket abgeleitet (FNV-1a), damit gleicher Link =
- * gleicher Fortschritt, unterschiedliche Kinder/Wortlisten getrennt bleiben.
- */
-export function fortschrittSchluessel(code: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < code.length; i++) {
-    h ^= code.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return `sz-ueben-fortschritt-${(h >>> 0).toString(36)}`;
 }

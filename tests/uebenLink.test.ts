@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  baueUebenLink,
+  baueSchuelerLink,
   decodeUebenPaket,
   encodeUebenPaket,
-  fortschrittSchluessel,
+  istLegacyUebenHash,
   istUebenHash,
   leseUebenPaketAusHash,
   type UebenPaket,
@@ -44,23 +44,23 @@ describe('uebenLink encode/decode', () => {
 });
 
 describe('uebenLink hash-Helfer', () => {
-  it('baut und liest einen vollständigen Link', () => {
-    const link = baueUebenLink(paket, 'https://example.org/app/');
-    expect(link.startsWith('https://example.org/app/#ueben=')).toBe(true);
-    const hash = '#' + link.split('#')[1];
+  it('baut den neuen Schüler-Link (ohne Wort-Payload)', () => {
+    const link = baueSchuelerLink('https://example.org/app/');
+    expect(link).toBe('https://example.org/app/#ueben');
+    expect(istUebenHash('#ueben')).toBe(true);
+    expect(istLegacyUebenHash('#ueben')).toBe(false);
+  });
+
+  it('erkennt veraltete Payload-Links weiterhin (nur noch als legacy)', () => {
+    const hash = `#ueben=${encodeUebenPaket(paket)}`;
     expect(istUebenHash(hash)).toBe(true);
+    expect(istLegacyUebenHash(hash)).toBe(true);
     expect(leseUebenPaketAusHash(hash)).toEqual(paket);
   });
 
   it('erkennt fremde Hashes nicht als Übungslink', () => {
     expect(istUebenHash('#irgendwas')).toBe(false);
+    expect(istUebenHash('#uebensonstwas')).toBe(false);
     expect(leseUebenPaketAusHash('#irgendwas')).toBeNull();
-  });
-
-  it('Fortschritts-Schlüssel ist stabil und linkspezifisch', () => {
-    const a = fortschrittSchluessel('#ueben=AAA');
-    expect(a).toBe(fortschrittSchluessel('#ueben=AAA'));
-    expect(a).not.toBe(fortschrittSchluessel('#ueben=BBB'));
-    expect(a.startsWith('sz-ueben-fortschritt-')).toBe(true);
   });
 });
