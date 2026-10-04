@@ -68,6 +68,13 @@ export function SchuelerApp() {
   const wortStartRef = useRef(0);
   const eventsRef = useRef<UebungsEreignis[]>([]);
   const zaehlerRef = useRef({ richtig: 0, zuUeben: 0 });
+  // Bonusrunde: Start, obwohl das Tagesziel schon erreicht war → kein Hard-Stop.
+  const bonusRundeRef = useRef(false);
+  // Schutz gegen doppeltes Beenden (Tick und bewerten() können sich überlappen).
+  const beendetRef = useRef(false);
+  // Aktuelle beenden()-Instanz für den Interval-Callback (Refs statt Closure-Deps).
+  const beendenRef = useRef<() => void>(() => {});
+  const zielRef = useRef({ zielSekunden: 0, sekundenHeute: 0 });
 
   async function ladeDaten(p: ServerSchueler): Promise<void> {
     await wartendeNachreichen().catch(() => {});
@@ -94,10 +101,22 @@ export function SchuelerApp() {
       .catch(() => setModus('anmelden'));
   }, []);
 
-  // Während des Übens: Countdown-Tick + Pause, wenn der Tab unsichtbar ist.
+  // Während des Übens: Countdown-Tick (inkl. Hard-Stop bei 0:00) + Pause,
+  // wenn der Tab unsichtbar ist. Der Tick liest ausschließlich Refs, damit das
+  // Intervall keine veralteten Closures sieht.
   useEffect(() => {
     if (modus !== 'ueben') return;
-    const intervall = setInterval(() => setTick((t) => t + 1), 1000);
+    const intervall = setInterval(() => {
+      const uhr = uhrRef.current;
+      const { zielSekunden, sekundenHeute } = zielRef.current;
+      // Zeit um → Runde sofort beenden (egal in welcher Phase). In der
+      // Bonusrunde (Ziel war beim Start schon erreicht) läuft es weiter.
+      if (uhr && !bonusRundeRef.current && istZeitUm(zielSekunden, sekundenHeute, uhr.aktiveMs())) {
+        beendenRef.current();
+        return;
+      }
+      setTick((t) => t + 1);
+    }, 1000);
     const sichtbarkeit = () => {
       if (document.hidden) uhrRef.current?.pause();
       else uhrRef.current?.start();
@@ -116,6 +135,9 @@ export function SchuelerApp() {
     wortStartRef.current = 0;
     eventsRef.current = [];
     zaehlerRef.current = { richtig: 0, zuUeben: 0 };
+    bonusRundeRef.current = heute.goalMet;
+    beendetRef.current = false;
+    zielRef.current = { zielSekunden: heute.goalSeconds, sekundenHeute: heute.secondsToday };
     setRunde(faellig);
     setIndex(0);
     setPhase('anschauen');
@@ -123,7 +145,8 @@ export function SchuelerApp() {
   }
 
   async function beenden(): Promise<void> {
-    if (!profil) return;
+    if (!profil || beendetRef.current) return;
+    beendetRef.current = true;
     uhrRef.current?.pause();
     setModus('sendet');
     const session = { kindId: profil.id, sessionId: newId(), events: eventsRef.current };
@@ -150,6 +173,9 @@ export function SchuelerApp() {
     setErgebnis({ ...zaehlerRef.current, uebertragung });
     setModus('fertig');
   }
+
+  // Immer die aktuelle Instanz bereithalten (für den Interval-Callback).
+  beendenRef.current = () => void beenden();
 
   function bewerten(korrekt: boolean): void {
     const wort = runde[index];
@@ -220,6 +246,7 @@ export function SchuelerApp() {
             position={index + 1}
             gesamt={runde.length}
             restSekunden={aktuelleRestSekunden}
+            bonus={bonusRundeRef.current}
             phase={phase}
             onAbdecken={() => setPhase('schreiben')}
             onAufdecken={() => setPhase('pruefen')}
@@ -366,6 +393,7 @@ function Uebungskarte({
   position,
   gesamt,
   restSekunden,
+  bonus,
   phase,
   onAbdecken,
   onAufdecken,
@@ -375,6 +403,7 @@ function Uebungskarte({
   position: number;
   gesamt: number;
   restSekunden: number;
+  bonus: boolean;
   phase: Phase;
   onAbdecken: () => void;
   onAufdecken: () => void;
@@ -387,9 +416,15 @@ function Uebungskarte({
         <span>
           Wort {position} von {gesamt}
         </span>
-        <span className="font-semibold text-brand-600" aria-label="Verbleibende Übungszeit">
-          ⏱ {formatZeit(restSekunden)}
-        </span>
+        {bonus ? (
+          <span className="font-semibold text-accent-600" aria-label="Bonusrunde">
+            ✓ Ziel geschafft
+          </span>
+        ) : (
+          <span className="font-semibold text-brand-600" aria-label="Verbleibende Übungszeit">
+            ⏱ {formatZeit(restSekunden)}
+          </span>
+        )}
         <span aria-label={`Kasten ${fach} von 5`}>
           {'★'.repeat(fach)}
           <span className="text-paper-300">{'★'.repeat(5 - fach)}</span>
