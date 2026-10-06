@@ -69,8 +69,11 @@ function proTag(events: PracticeEventRow[], tz: string): Map<string, TagesSumme>
     const key = tagesSchluessel(tz, ev.practiced_at);
     const summe = map.get(key) ?? { seconds: 0, reviewed: 0, correct: 0 };
     summe.seconds += ev.duration_ms / 1000;
-    summe.reviewed += 1;
-    summe.correct += ev.correct ? 1 : 0;
+    // Reine Zeitgutschriften (#17) zählen zur Zeit, aber nicht als Versuch.
+    if (ev.art !== 'zeit') {
+      summe.reviewed += 1;
+      summe.correct += ev.correct ? 1 : 0;
+    }
     map.set(key, summe);
   }
   return map;
@@ -135,7 +138,7 @@ export function schwacheWoerter(db: Database, kidId: string, limit = 10): Schwac
       `SELECT w.id AS wordId, w.wort AS wort, w.fach AS fach,
               COUNT(e.id) AS attempts, SUM(1 - e.correct) AS wrong
        FROM words w JOIN practice_events e ON e.word_id = w.id
-       WHERE w.kid_id = ?
+       WHERE w.kid_id = ? AND e.art <> 'zeit'
        GROUP BY w.id
        HAVING attempts >= ?`,
     )

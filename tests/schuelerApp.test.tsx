@@ -38,12 +38,19 @@ function jsonResponse(data: unknown): Response {
   });
 }
 
-/** Fetch-Mock mit URL-Routing; sammelt alle Aufrufe für Assertions. */
+interface Aufruf {
+  url: string;
+  method: string;
+  body: unknown;
+}
+
+/** Fetch-Mock mit URL-Routing; sammelt alle Aufrufe (inkl. Body) für Assertions. */
 function mockApi(heute: HeuteStand) {
-  const aufrufe: { url: string; method: string }[] = [];
+  const aufrufe: Aufruf[] = [];
   const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
     const u = String(url);
-    aufrufe.push({ url: u, method: init?.method ?? 'GET' });
+    const body = typeof init?.body === 'string' ? JSON.parse(init.body) : undefined;
+    aufrufe.push({ url: u, method: init?.method ?? 'GET', body });
     if (u.includes('/auth/kid-me')) return Promise.resolve(jsonResponse(profil));
     if (u.includes('/practice/today')) return Promise.resolve(jsonResponse(heute));
     if (u.includes('/practice/due'))
@@ -90,9 +97,15 @@ describe('SchuelerApp Hard-Stop (#11)', () => {
     expect(await screen.findByText('Gut gemacht!')).toBeTruthy(); // Fertigkarte
     expect(screen.queryByText('Abdecken')).toBeNull();
 
-    // Das angefangene, nie bewertete Wort erzeugt kein Event → kein Practice-POST.
+    // #17: Das angefangene, nie bewertete Wort schreibt seine aktive Zeit als
+    // reines Zeit-Ereignis gut (sonst bliebe der Tagesstand hinter dem Countdown
+    // zurück und „noch bis zum Ziel" spränge wieder hoch).
     const praxisPosts = aufrufe.filter((a) => a.method === 'POST' && a.url.includes('/practice'));
-    expect(praxisPosts).toHaveLength(0);
+    expect(praxisPosts).toHaveLength(1);
+    const events = (praxisPosts[0]?.body as { events: Array<Record<string, unknown>> }).events;
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ nurZeit: true, correct: false });
+    expect(events[0]?.durationMs as number).toBeGreaterThanOrEqual(3000);
   });
 
   it('Bonusrunde: Ziel beim Start schon erreicht → kein Hard-Stop, Badge statt Countdown', async () => {

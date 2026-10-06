@@ -85,6 +85,11 @@ export interface UebungsEreignis {
   correct: boolean;
   durationMs: number;
   practicedAt: number;
+  /**
+   * Reine Zeitgutschrift (#17): ein angefangenes, aber nie bewertetes Wort beim
+   * Hard-Stop. Zählt zur Übungszeit, ohne SRS/Trefferstatistik zu verändern.
+   */
+  nurZeit?: boolean;
 }
 
 export interface UebungsErgebnis {

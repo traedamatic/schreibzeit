@@ -25,6 +25,7 @@ import {
   formatZeit,
   istNomen,
   istZeitUm,
+  offeneZeitErfassen,
   restSekunden,
   sessionAnhaengen,
   wartendeAbspielen,
@@ -167,6 +168,16 @@ export function SchuelerApp() {
     if (!profil || beendetRef.current) return;
     beendetRef.current = true;
     uhrRef.current?.pause();
+    // Angefangenes, nie bewertetes Wort beim Hard-Stop: dessen aktive Zeit dem
+    // Server gutschreiben (#17), sonst bleibt der Tagesstand hinter dem Countdown
+    // zurück und „noch bis zum Ziel" springt wieder hoch.
+    const zeitEreignis = offeneZeitErfassen(
+      uhrRef.current?.aktiveMs() ?? 0,
+      eventsRef.current,
+      runde[index],
+      now(),
+    );
+    if (zeitEreignis) eventsRef.current.push(zeitEreignis);
     setModus('sendet');
     const session = {
       kindId: profil.id,
