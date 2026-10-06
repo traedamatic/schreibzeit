@@ -36,7 +36,7 @@ describe('recordSession mit Zeitgutschrift (#17)', () => {
       { wordId: wortId, correct: false, durationMs: 13_000, practicedAt: JETZT, nurZeit: true },
     ]);
 
-    const zusammenfassung = getTodaySummary(db, kidId, 300, TAGESBEGINN);
+    const zusammenfassung = getTodaySummary(db, kidId, 300, 600, TAGESBEGINN);
     expect(zusammenfassung.secondsToday).toBe(13);
 
     // SRS unangetastet: Wort bleibt in Fach 1 mit unverändertem Status.

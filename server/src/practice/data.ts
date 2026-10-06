@@ -2,7 +2,7 @@
 // records one practice_event per word attempt with its duration. Idempotent on
 // repeated (session_id, word_id) so offline-sync retries can't double-apply.
 import type { Database } from 'bun:sqlite';
-import type { PracticeArt, UebungsModus, WordRow } from '../types';
+import type { PracticeArt, WordRow } from '../types';
 import { getWordById } from '../words/data';
 import { naechsterStand } from '../srs';
 import { newId, now } from '../ids';
@@ -38,20 +38,15 @@ export interface RecordResult {
 
 /**
  * Words currently due for a kid (SRS: faellig_am ≤ now), oldest first.
- * Im Übungsmodus 'nomen' (#15) werden nur Nomen geliefert: Artikel der/die/das
- * oder wortart 'Nomen'.
+ *
+ * Seit #18 liefert dies immer alle fälligen Wörter — die Wahl der Übung (alle
+ * Wörter / nur Nomen / Quiz) trifft das Kind pro Session clientseitig; der Server
+ * schreibt sie dem Kind nicht mehr vor.
  */
-export function getDueWords(
-  db: Database,
-  kidId: string,
-  nowMs: number,
-  modus: UebungsModus = 'alle',
-): WordRow[] {
-  const nomenFilter =
-    modus === 'nomen' ? " AND (artikel IN ('der','die','das') OR lower(wortart) = 'nomen')" : '';
+export function getDueWords(db: Database, kidId: string, nowMs: number): WordRow[] {
   return db
     .query(
-      `SELECT * FROM words WHERE kid_id = ? AND faellig_am IS NOT NULL AND faellig_am <= ?${nomenFilter} ORDER BY faellig_am ASC;`,
+      'SELECT * FROM words WHERE kid_id = ? AND faellig_am IS NOT NULL AND faellig_am <= ? ORDER BY faellig_am ASC;',
     )
     .all(kidId, nowMs) as WordRow[];
 }
@@ -61,9 +56,12 @@ export function getDueWords(
  * (sessionId, wordId) pairs are skipped (idempotent). The whole run is one
  * transaction; an invalid word reference rolls it back.
  *
- * `art` (#16): bei 'schreiben' (Standard) wird zusätzlich der SRS-Stand des
- * Worts fortgeschrieben; bei 'quiz' zählt nur Zeit + richtig/falsch —
- * `fach`/`faellig_am`/`status` bleiben unverändert (fach_before = fach_after).
+ * Seit #18 speist **jede** echte Übungsart den SRS-Stand: eine falsche Antwort
+ * setzt das Wort zurück (Box 1 → es taucht bald wieder auf), eine richtige rückt
+ * es vor. So wirken auch das Quiz und die Groß/klein-Übung auf die Problemwort-
+ * Erkennung. Ausnahme: reine Zeitgutschriften (#17, `nurZeit` → `art = 'zeit'`)
+ * zählen nur zur Übungszeit und lassen den SRS-Stand unberührt. `art` bleibt am
+ * Event erhalten (Statistik/Übungstyp).
  */
 export function recordSession(
   db: Database,
@@ -89,13 +87,13 @@ export function recordSession(
         skipped += 1;
         continue;
       }
-      // 'zeit' (#17) ist eine reine Zeitgutschrift: wie 'quiz' SRS-neutral, aber
-      // zusätzlich aus der Trefferstatistik ausgenommen (siehe stats/data.ts).
       const eventArt = ev.nurZeit ? 'zeit' : art;
-      const srsWirksam = eventArt === 'schreiben';
-      const fachNachher = srsWirksam
-        ? naechsterStand(word.fach, ev.correct, ev.practicedAt).fach
-        : word.fach;
+      // Seit #18 speist jede echte Übung den SRS-Stand (auch das Quiz): richtig
+      // rückt vor, falsch setzt zurück. Reine Zeitgutschriften (#17, 'zeit')
+      // bleiben SRS-neutral und aus der Trefferstatistik ausgenommen (stats/data.ts).
+      const srsWirksam = eventArt !== 'zeit';
+      const next = naechsterStand(word.fach, ev.correct, ev.practicedAt);
+      const fachNachher = srsWirksam ? next.fach : word.fach;
       db.query(
         `INSERT INTO practice_events
            (id, kid_id, word_id, session_id, correct, duration_ms, art, fach_before, fach_after, practiced_at)
@@ -113,7 +111,6 @@ export function recordSession(
         ev.practicedAt,
       );
       if (srsWirksam) {
-        const next = naechsterStand(word.fach, ev.correct, ev.practicedAt);
         db.query(
           'UPDATE words SET fach = ?, faellig_am = ?, status = ?, updated_at = ? WHERE id = ?;',
         ).run(next.fach, next.faelligAm, next.status, now(), ev.wordId);
@@ -132,14 +129,21 @@ export interface TodaySummary {
   secondsToday: number;
   goalSeconds: number;
   goalMet: boolean;
+  /** Harte Tagesobergrenze (#18): ab hier ist für heute Schluss. */
+  capSeconds: number;
+  capMet: boolean;
   sessionsToday: number;
 }
 
-/** Aggregate today's practice time for a kid vs its goal. `startMs` = local midnight. */
+/**
+ * Aggregate today's practice time for a kid vs its goal and hard cap (#18).
+ * `startMs` = local midnight.
+ */
 export function getTodaySummary(
   db: Database,
   kidId: string,
   goalSeconds: number,
+  capSeconds: number,
   startMs: number,
 ): TodaySummary {
   const row = db
@@ -153,6 +157,8 @@ export function getTodaySummary(
     secondsToday,
     goalSeconds,
     goalMet: secondsToday >= goalSeconds,
+    capSeconds,
+    capMet: secondsToday >= capSeconds,
     sessionsToday: row.sessions,
   };
 }

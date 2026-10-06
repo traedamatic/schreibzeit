@@ -26,6 +26,7 @@ const serverKind = (patch: Partial<ServerKind> = {}): ServerKind => ({
   lernstand: 'klasse2',
   notiz: null,
   dailyGoalSeconds: 300,
+  dailyCapSeconds: 600,
   uebungsModus: 'alle',
   createdAt: 1000,
   updatedAt: 2000,

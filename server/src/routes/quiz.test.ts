@@ -1,5 +1,6 @@
-// Groß/klein-Quiz (#16): Quiz-Sessions zählen in die Übungszeit, verändern
-// aber keinen SRS-Stand; Events tragen art = 'quiz'.
+// Groß/klein-Quiz (#16): Quiz-Sessions zählen in die Übungszeit und tragen
+// art = 'quiz'. Seit #18 speist auch das Quiz den SRS-Stand (Problemwörter),
+// d. h. richtig rückt vor, falsch setzt zurück.
 import { describe, expect, it } from 'bun:test';
 import { createApp } from '../app';
 import { openDatabase } from '../db';
@@ -50,7 +51,7 @@ describe('Groß/klein-Quiz (#16)', () => {
     expect(((await res.json()) as { uebungsModus: string }).uebungsModus).toBe('quiz');
   });
 
-  it('Quiz-Submit: Zeit zählt, Event trägt art=quiz, SRS bleibt unverändert', async () => {
+  it('Quiz-Submit: Zeit zählt, Event trägt art=quiz, SRS schreitet fort (#18)', async () => {
     const { app, db, adminCookie, kidId, wortId } = await setup();
 
     const submit = await app.handle(
@@ -68,9 +69,9 @@ describe('Groß/klein-Quiz (#16)', () => {
     expect(submit.status).toBe(200);
     const result = (await submit.json()) as { applied: number; updated: { fach: number; status: string }[] };
     expect(result.applied).toBe(1);
-    // SRS unverändert: fach 1, status neu — trotz korrekter Antwort.
-    expect(result.updated[0]?.fach).toBe(1);
-    expect(result.updated[0]?.status).toBe('neu');
+    // #18: richtige Quiz-Antwort rückt den SRS-Stand vor (Fach 1 → 2).
+    expect(result.updated[0]?.fach).toBe(2);
+    expect(result.updated[0]?.status).toBe('wird_geuebt');
 
     const event = db.query('SELECT art, fach_before, fach_after FROM practice_events;').get() as {
       art: string;
@@ -78,10 +79,54 @@ describe('Groß/klein-Quiz (#16)', () => {
       fach_after: number;
     };
     expect(event.art).toBe('quiz');
-    expect(event.fach_after).toBe(event.fach_before);
+    expect(event.fach_before).toBe(1);
+    expect(event.fach_after).toBe(2);
 
     const today = await app.handle(req('GET', `/api/kids/${kidId}/practice/today`, undefined, adminCookie));
     expect(((await today.json()) as { secondsToday: number }).secondsToday).toBe(120);
+  });
+
+  it('Quiz-Submit: falsche Antwort setzt das Wort zurück (Problemwort, #18)', async () => {
+    const { app, db, adminCookie, kidId, wortId } = await setup();
+    // Wort erst auf Fach 3 heben …
+    await app.handle(
+      req(
+        'POST',
+        `/api/kids/${kidId}/practice`,
+        {
+          sessionId: 's-up-1',
+          events: [{ wordId: wortId, correct: true, durationMs: 1000, practicedAt: now() }],
+        },
+        adminCookie,
+      ),
+    );
+    await app.handle(
+      req(
+        'POST',
+        `/api/kids/${kidId}/practice`,
+        {
+          sessionId: 's-up-2',
+          events: [{ wordId: wortId, correct: true, durationMs: 1000, practicedAt: now() }],
+        },
+        adminCookie,
+      ),
+    );
+    expect((db.query('SELECT fach FROM words WHERE id = ?;').get(wortId) as { fach: number }).fach).toBe(3);
+
+    // … dann im Quiz falsch → zurück auf Fach 1.
+    await app.handle(
+      req(
+        'POST',
+        `/api/kids/${kidId}/practice`,
+        {
+          sessionId: 'quiz-wrong',
+          art: 'quiz',
+          events: [{ wordId: wortId, correct: false, durationMs: 1000, practicedAt: now() }],
+        },
+        adminCookie,
+      ),
+    );
+    expect((db.query('SELECT fach FROM words WHERE id = ?;').get(wortId) as { fach: number }).fach).toBe(1);
   });
 
   it("Schreib-Submit (ohne art / art='schreiben') verhält sich unverändert (SRS schreitet fort)", async () => {

@@ -33,6 +33,13 @@ function badGoal(goal: number | undefined): string | null {
   return null;
 }
 
+/** Returns an error string if dailyCapSeconds is present but invalid. */
+function badCap(cap: number | undefined): string | null {
+  if (cap === undefined) return null;
+  if (!Number.isInteger(cap) || cap <= 0) return 'dailyCapSeconds must be a positive integer.';
+  return null;
+}
+
 export function kidsRoutes(db: Database) {
   return new Elysia({ prefix: '/kids' })
     .use(adminContext(db))
@@ -114,20 +121,30 @@ export function kidsRoutes(db: Database) {
           set.status = 400;
           return { error: 'Invalid uebungsModus.' };
         }
-        const goalError = badGoal(body.dailyGoalSeconds);
+        const goalError = badGoal(body.dailyGoalSeconds) ?? badCap(body.dailyCapSeconds);
         if (goalError) {
           set.status = 400;
           return { error: goalError };
         }
-        if (!getKidFuerFamilie(db, params.id, admin.family_id)) {
+        const bestehend = getKidFuerFamilie(db, params.id, admin.family_id);
+        if (!bestehend) {
           set.status = 404;
           return { error: 'Kid not found.' };
+        }
+        // Obergrenze darf nicht unter dem Tagesziel liegen (gegen die jeweils
+        // andere, ggf. unveränderte Größe geprüft).
+        const effektivesZiel = body.dailyGoalSeconds ?? bestehend.daily_goal_seconds;
+        const effektiveGrenze = body.dailyCapSeconds ?? bestehend.daily_cap_seconds;
+        if (effektiveGrenze < effektivesZiel) {
+          set.status = 400;
+          return { error: 'dailyCapSeconds must be ≥ dailyGoalSeconds.' };
         }
         const kid = updateKid(db, params.id, {
           name: body.name,
           lernstand: body.lernstand as Lernstand | undefined,
           notiz: body.notiz,
           dailyGoalSeconds: body.dailyGoalSeconds,
+          dailyCapSeconds: body.dailyCapSeconds,
           uebungsModus: body.uebungsModus as UebungsModus | undefined,
         });
         if (!kid) {
@@ -142,6 +159,7 @@ export function kidsRoutes(db: Database) {
           lernstand: t.Optional(t.String()),
           notiz: t.Optional(t.Union([t.String({ maxLength: 2000 }), t.Null()])),
           dailyGoalSeconds: t.Optional(t.Integer()),
+          dailyCapSeconds: t.Optional(t.Integer()),
           uebungsModus: t.Optional(t.String({ maxLength: 20 })),
         }),
       },

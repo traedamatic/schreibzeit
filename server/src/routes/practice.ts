@@ -82,7 +82,7 @@ export function practiceRoutes(db: Database, config: Config) {
         set.status = zugriff.status;
         return zugriffsFehler(zugriff.status);
       }
-      return getDueWords(db, zugriff.kid.id, now(), zugriff.kid.uebungs_modus).map(toPublicWord);
+      return getDueWords(db, zugriff.kid.id, now()).map(toPublicWord);
     })
     .get('/kids/:id/practice/today', ({ params, admin, kid, set }) => {
       const zugriff = kidZugriff(db, admin, kid, params.id);
@@ -91,6 +91,12 @@ export function practiceRoutes(db: Database, config: Config) {
         return zugriffsFehler(zugriff.status);
       }
       const startMs = startOfDayMs(config.TZ, now());
-      return getTodaySummary(db, zugriff.kid.id, zugriff.kid.daily_goal_seconds, startMs);
+      return getTodaySummary(
+        db,
+        zugriff.kid.id,
+        zugriff.kid.daily_goal_seconds,
+        zugriff.kid.daily_cap_seconds,
+        startMs,
+      );
     });
 }
