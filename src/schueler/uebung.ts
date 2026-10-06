@@ -2,7 +2,7 @@
 // (pausierbar, z. B. wenn der Tab in den Hintergrund geht), die
 // Offline-Warteschlange für noch nicht übertragene Übungs-Sessions und die
 // Quiz-Rundenlogik (#16). Keine DOM-/React-Abhängigkeit — vollständig testbar.
-import type { PracticeArt, UebungsEreignis } from '@/services/api';
+import type { PracticeArt, UebungsEreignis, UebungsModus } from '@/services/api';
 
 // ---------------------------------------------------------------------------
 // Zeitziel ("5 Minuten üben")
@@ -169,4 +169,68 @@ export function baueQuizRunde<T extends QuizWort>(
     i++;
   }
   return mischen(runde);
+}
+
+// ---------------------------------------------------------------------------
+// Übungsmix: welche Übungsarten das Kind heute schon gemacht hat (#18)
+// ---------------------------------------------------------------------------
+// Rein lokal (localStorage) — nur zum sanften Anstupsen („probier mal etwas
+// anderes"). Keine Pflicht; der Server kennt diese Mischung nicht.
+
+/** Alle wählbaren Übungsarten in Anzeigereihenfolge. */
+export const UEBUNGS_ARTEN: readonly UebungsModus[] = ['alle', 'nomen', 'quiz'];
+
+const ARTEN_KEY_PREFIX = 'sz-ueben-arten-';
+
+interface ArtenStand {
+  datum: string;
+  arten: UebungsModus[];
+}
+
+function artenLaden(kidId: string, storage: Storage): ArtenStand | null {
+  try {
+    const roh = storage.getItem(ARTEN_KEY_PREFIX + kidId);
+    if (!roh) return null;
+    const stand = JSON.parse(roh) as ArtenStand;
+    return Array.isArray(stand.arten) && typeof stand.datum === 'string' ? stand : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Übungsarten, die das Kind an `datum` (YYYY-MM-DD) schon geübt hat. */
+export function heuteGeuebteArten(
+  kidId: string,
+  datum: string,
+  storage: Storage = localStorage,
+): Set<UebungsModus> {
+  const stand = artenLaden(kidId, storage);
+  return new Set(stand && stand.datum === datum ? stand.arten : []);
+}
+
+/** Merkt eine an `datum` geübte Übungsart (setzt die Liste bei Tageswechsel zurück). */
+export function merkeGeuebteArt(
+  kidId: string,
+  datum: string,
+  art: UebungsModus,
+  storage: Storage = localStorage,
+): void {
+  const arten = heuteGeuebteArten(kidId, datum, storage);
+  arten.add(art);
+  try {
+    storage.setItem(
+      ARTEN_KEY_PREFIX + kidId,
+      JSON.stringify({ datum, arten: [...arten] } satisfies ArtenStand),
+    );
+  } catch {
+    // Speicher voll/gesperrt — der Anstupser ist nur ein Extra.
+  }
+}
+
+/**
+ * Nächste vorgeschlagene Übungsart für den Mix: die erste heute noch nicht
+ * geübte Art (in fester Reihenfolge). `null`, sobald alle drei dran waren.
+ */
+export function naechsterArtVorschlag(geuebt: Set<UebungsModus>): UebungsModus | null {
+  return UEBUNGS_ARTEN.find((a) => !geuebt.has(a)) ?? null;
 }

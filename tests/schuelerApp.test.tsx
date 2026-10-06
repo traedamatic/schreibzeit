@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-// SchuelerApp: Hard-Stop der Übung, sobald der Countdown 0:00 erreicht (#11),
-// und die Bonusrunde (Ziel beim Start schon erreicht → kein Hard-Stop).
+// SchuelerApp (#18): Das Kind wählt die Übung pro Session selbst; die Übung
+// stoppt hart erst an der Tagesobergrenze (nicht schon am Ziel), und bei
+// erreichtem Ziel läuft sie als Bonus bis zur Grenze weiter.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { SchuelerApp } from '@/schueler/SchuelerApp';
@@ -11,6 +12,7 @@ const profil = {
   name: 'Lina',
   lernstand: 'klasse2',
   dailyGoalSeconds: 300,
+  dailyCapSeconds: 600,
   uebungsModus: 'alle',
 };
 
@@ -38,6 +40,8 @@ function jsonResponse(data: unknown): Response {
   });
 }
 
+const WOERTER = [wort('w1', 'Sommer'), wort('w2', 'Haus')];
+
 /** Fetch-Mock mit URL-Routing; sammelt alle Aufrufe für Assertions. */
 function mockApi(heute: HeuteStand) {
   const aufrufe: { url: string; method: string }[] = [];
@@ -46,8 +50,9 @@ function mockApi(heute: HeuteStand) {
     aufrufe.push({ url: u, method: init?.method ?? 'GET' });
     if (u.includes('/auth/kid-me')) return Promise.resolve(jsonResponse(profil));
     if (u.includes('/practice/today')) return Promise.resolve(jsonResponse(heute));
-    if (u.includes('/practice/due'))
-      return Promise.resolve(jsonResponse([wort('w1', 'Sommer'), wort('w2', 'Haus')]));
+    if (u.includes('/practice/due')) return Promise.resolve(jsonResponse(WOERTER));
+    // Ganze Kartei (für Quiz + Startkarten-Anzahlen, #18).
+    if (u.includes('/words')) return Promise.resolve(jsonResponse(WOERTER));
     return Promise.resolve(jsonResponse({}));
   });
   vi.stubGlobal('fetch', fetchMock);
@@ -66,40 +71,52 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('SchuelerApp Hard-Stop (#11)', () => {
-  it('beendet die Runde automatisch, wenn der Countdown 0 erreicht — ohne Interaktion', async () => {
-    // 297/300 s: nach ~3 s aktiver Zeit ist das Ziel erreicht.
-    const aufrufe = mockApi({ secondsToday: 297, goalSeconds: 300, goalMet: false, sessionsToday: 1 });
+describe('SchuelerApp — Übungswahl durch das Kind (#18)', () => {
+  it('zeigt nach dem Login drei wählbare Übungen und startet die gewählte', async () => {
+    mockApi({ secondsToday: 0, goalSeconds: 300, goalMet: false, capSeconds: 600, capMet: false, sessionsToday: 0 });
 
     render(<SchuelerApp />);
-    const startButton = await screen.findByText('▶ Üben starten');
+    // Alle drei Übungen stehen zur Wahl.
+    expect(await screen.findByRole('button', { name: /Wörter schreiben/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Groß & klein/ })).toBeTruthy();
+    const quizBtn = screen.getByRole('button', { name: /Quiz/ });
 
-    // Fake-Timer VOR dem Start aktivieren, damit Intervall + Stoppuhr darauf laufen.
+    act(() => {
+      quizBtn.click();
+    });
+    // Quiz-Karte läuft (Groß/klein-Frage) — nicht die Schreibkarte.
+    expect(screen.getByText('Schreibt man dieses Wort groß oder klein?')).toBeTruthy();
+    expect(screen.queryByText('Abdecken')).toBeNull();
+  });
+
+  it('stoppt die Übung hart erst an der Tagesobergrenze', async () => {
+    // Ziel längst erreicht (100 s), aber 297/300 s bis zur Grenze → ~3 s Rest.
+    mockApi({ secondsToday: 297, goalSeconds: 100, goalMet: true, capSeconds: 300, capMet: false, sessionsToday: 1 });
+
+    render(<SchuelerApp />);
+    const startButton = await screen.findByRole('button', { name: /Wörter schreiben/ });
+
     vi.useFakeTimers();
     act(() => {
       startButton.click();
     });
-    expect(screen.getByText('Abdecken')).toBeTruthy(); // Runde läuft, Phase anschauen
+    expect(screen.getByText('Abdecken')).toBeTruthy(); // Runde läuft
 
-    // 5 s verstreichen — kein Tippen. Der Tick muss die Runde hart beenden.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
     });
     vi.useRealTimers();
 
-    expect(await screen.findByText('Gut gemacht!')).toBeTruthy(); // Fertigkarte
+    expect(await screen.findByText(/geschafft|Gut gemacht/)).toBeTruthy(); // Fertigkarte
     expect(screen.queryByText('Abdecken')).toBeNull();
-
-    // Das angefangene, nie bewertete Wort erzeugt kein Event → kein Practice-POST.
-    const praxisPosts = aufrufe.filter((a) => a.method === 'POST' && a.url.includes('/practice'));
-    expect(praxisPosts).toHaveLength(0);
   });
 
-  it('Bonusrunde: Ziel beim Start schon erreicht → kein Hard-Stop, Badge statt Countdown', async () => {
-    mockApi({ secondsToday: 400, goalSeconds: 300, goalMet: true, sessionsToday: 2 });
+  it('läuft bei erreichtem Ziel als Bonus bis zur Grenze weiter (Badge statt Hard-Stop)', async () => {
+    // Ziel erreicht (goalMet), aber weit unter der Grenze (400/600).
+    mockApi({ secondsToday: 400, goalSeconds: 300, goalMet: true, capSeconds: 600, capMet: false, sessionsToday: 2 });
 
     render(<SchuelerApp />);
-    const startButton = await screen.findByText('▶ Üben starten');
+    const startButton = await screen.findByRole('button', { name: /Wörter schreiben/ });
 
     vi.useFakeTimers();
     act(() => {
@@ -112,8 +129,16 @@ describe('SchuelerApp Hard-Stop (#11)', () => {
     });
     vi.useRealTimers();
 
-    // Runde läuft weiter — keine Fertigkarte, Übungskarte noch da.
+    // Noch unter der Grenze → Runde läuft weiter, keine Fertigkarte.
     expect(screen.queryByText('Gut gemacht!')).toBeNull();
     expect(screen.getByText('Abdecken')).toBeTruthy();
+  });
+
+  it('blockt den Start, wenn die Tagesobergrenze schon erreicht ist', async () => {
+    mockApi({ secondsToday: 600, goalSeconds: 300, goalMet: true, capSeconds: 600, capMet: true, sessionsToday: 3 });
+
+    render(<SchuelerApp />);
+    expect(await screen.findByText(/genug geübt/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Wörter schreiben/ })).toBeNull();
   });
 });

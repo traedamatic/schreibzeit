@@ -22,6 +22,7 @@ export interface ServerKind {
   lernstand: Lernstand;
   notiz: string | null;
   dailyGoalSeconds: number;
+  dailyCapSeconds: number;
   uebungsModus: UebungsModus;
   createdAt: number;
   updatedAt: number;
@@ -57,14 +58,18 @@ export interface ServerSchueler {
   name: string;
   lernstand: Lernstand;
   dailyGoalSeconds: number;
+  dailyCapSeconds: number;
   uebungsModus: UebungsModus;
 }
 
-/** Tages-Stand gegen das Übungsziel (GET …/practice/today). */
+/** Tages-Stand gegen Ziel + harte Obergrenze (GET …/practice/today). */
 export interface HeuteStand {
   secondsToday: number;
   goalSeconds: number;
   goalMet: boolean;
+  /** Harte Tagesobergrenze (#18): ab hier stoppt die Übung. */
+  capSeconds: number;
+  capMet: boolean;
   sessionsToday: number;
 }
 
@@ -159,6 +164,7 @@ export const kidsApi = {
       lernstand?: Lernstand;
       notiz?: string | null;
       dailyGoalSeconds?: number;
+      dailyCapSeconds?: number;
       uebungsModus?: UebungsModus;
     },
   ) => request<ServerKind>('PUT', `/kids/${id}`, patch),

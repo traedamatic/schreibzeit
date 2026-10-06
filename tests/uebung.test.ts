@@ -5,8 +5,11 @@ import {
   baueQuizRunde,
   erzeugeStoppuhr,
   formatZeit,
+  heuteGeuebteArten,
   istNomen,
   istZeitUm,
+  merkeGeuebteArt,
+  naechsterArtVorschlag,
   restSekunden,
   sessionAnhaengen,
   wartendeAbspielen,
@@ -106,6 +109,34 @@ describe('Offline-Warteschlange', () => {
   it('übersteht kaputten Speicherinhalt', () => {
     localStorage.setItem('sz-ueben-warteschlange', '{kein json');
     expect(wartendeLaden()).toEqual([]);
+  });
+});
+
+describe('Übungsmix-Anstupser (#18)', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('merkt geübte Arten pro Tag und liefert sie zurück', () => {
+    merkeGeuebteArt('k1', '2026-10-06', 'alle');
+    merkeGeuebteArt('k1', '2026-10-06', 'quiz');
+    const arten = heuteGeuebteArten('k1', '2026-10-06');
+    expect([...arten].sort()).toEqual(['alle', 'quiz']);
+  });
+
+  it('setzt die Liste bei Tageswechsel zurück', () => {
+    merkeGeuebteArt('k1', '2026-10-05', 'alle');
+    expect(heuteGeuebteArten('k1', '2026-10-06').size).toBe(0);
+  });
+
+  it('trennt Kinder', () => {
+    merkeGeuebteArt('k1', '2026-10-06', 'alle');
+    expect(heuteGeuebteArten('k2', '2026-10-06').size).toBe(0);
+  });
+
+  it('schlägt die erste noch nicht geübte Art vor; null wenn alle dran waren', () => {
+    expect(naechsterArtVorschlag(new Set())).toBe('alle');
+    expect(naechsterArtVorschlag(new Set(['alle']))).toBe('nomen');
+    expect(naechsterArtVorschlag(new Set(['alle', 'nomen']))).toBe('quiz');
+    expect(naechsterArtVorschlag(new Set(['alle', 'nomen', 'quiz']))).toBeNull();
   });
 });
 

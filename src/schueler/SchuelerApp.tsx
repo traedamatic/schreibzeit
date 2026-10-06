@@ -18,13 +18,17 @@ import {
   type ServerSchueler,
   type ServerWort,
   type UebungsEreignis,
+  type UebungsModus,
 } from '@/services/api';
 import {
   baueQuizRunde,
   erzeugeStoppuhr,
   formatZeit,
+  heuteGeuebteArten,
   istNomen,
   istZeitUm,
+  merkeGeuebteArt,
+  naechsterArtVorschlag,
   restSekunden,
   sessionAnhaengen,
   wartendeAbspielen,
@@ -57,6 +61,11 @@ async function wartendeNachreichen(): Promise<void> {
   );
 }
 
+/** Lokaler Kalendertag (YYYY-MM-DD) für den Übungsmix-Anstupser (#18). */
+function heuteDatum(): string {
+  return new Date(now()).toISOString().slice(0, 10);
+}
+
 export function SchuelerApp() {
   const [modus, setModus] = useState<Modus>('laden');
   const [profil, setProfil] = useState<ServerSchueler | null>(null);
@@ -69,6 +78,8 @@ export function SchuelerApp() {
   const [runde, setRunde] = useState<ServerWort[]>([]);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>('anschauen');
+  // Vom Kind pro Session gewählte Übungsart (#18) — nicht mehr admin-vorgegeben.
+  const [gewaehlterModus, setGewaehlterModus] = useState<UebungsModus>('alle');
   // Quiz-Zustand (#16): Frage- oder Feedback-Phase + letzte Antwort.
   const [quizPhase, setQuizPhase] = useState<'frage' | 'feedback'>('frage');
   const [quizKorrekt, setQuizKorrekt] = useState(false);
@@ -77,21 +88,21 @@ export function SchuelerApp() {
   const wortStartRef = useRef(0);
   const eventsRef = useRef<UebungsEreignis[]>([]);
   const zaehlerRef = useRef({ richtig: 0, zuUeben: 0 });
-  // Bonusrunde: Start, obwohl das Tagesziel schon erreicht war → kein Hard-Stop.
-  const bonusRundeRef = useRef(false);
   // Schutz gegen doppeltes Beenden (Tick und bewerten() können sich überlappen).
   const beendetRef = useRef(false);
   // Aktuelle beenden()-Instanz für den Interval-Callback (Refs statt Closure-Deps).
   const beendenRef = useRef<() => void>(() => {});
-  const zielRef = useRef({ zielSekunden: 0, sekundenHeute: 0 });
+  // Schnappschuss von Tagesziel + harter Grenze (#18) beim Start der Runde.
+  const zielRef = useRef({ zielSekunden: 0, grenzeSekunden: 0, sekundenHeute: 0 });
 
   async function ladeDaten(p: ServerSchueler): Promise<void> {
     await wartendeNachreichen().catch(() => {});
     const [h, f, alle] = await Promise.all([
       uebenApi.heute(p.id),
       uebenApi.faellig(p.id),
-      // Das Quiz mischt Nomen und Nicht-Nomen aus der ganzen Kartei (#16).
-      p.uebungsModus === 'quiz' ? uebenApi.woerter(p.id) : Promise.resolve([] as ServerWort[]),
+      // Das Kind darf jede Übung wählen (#18) — die ganze Kartei immer laden
+      // (für das Quiz und die Wort-Anzahlen auf der Startkarte).
+      uebenApi.woerter(p.id),
     ]);
     setProfil(p);
     setHeute(h);
@@ -116,17 +127,17 @@ export function SchuelerApp() {
       .catch(() => setModus('anmelden'));
   }, []);
 
-  // Während des Übens: Countdown-Tick (inkl. Hard-Stop bei 0:00) + Pause,
-  // wenn der Tab unsichtbar ist. Der Tick liest ausschließlich Refs, damit das
-  // Intervall keine veralteten Closures sieht.
+  // Während des Übens: Countdown-Tick + Pause, wenn der Tab unsichtbar ist.
+  // Hard-Stop erst an der harten Tagesgrenze (#18): Das Tagesziel (5 min) darf
+  // überschritten werden, geübt wird bis maximal zur Grenze (z. B. 10 min).
+  // Der Tick liest ausschließlich Refs, damit das Intervall keine veralteten
+  // Closures sieht.
   useEffect(() => {
     if (modus !== 'ueben') return;
     const intervall = setInterval(() => {
       const uhr = uhrRef.current;
-      const { zielSekunden, sekundenHeute } = zielRef.current;
-      // Zeit um → Runde sofort beenden (egal in welcher Phase). In der
-      // Bonusrunde (Ziel war beim Start schon erreicht) läuft es weiter.
-      if (uhr && !bonusRundeRef.current && istZeitUm(zielSekunden, sekundenHeute, uhr.aktiveMs())) {
+      const { grenzeSekunden, sekundenHeute } = zielRef.current;
+      if (uhr && istZeitUm(grenzeSekunden, sekundenHeute, uhr.aktiveMs())) {
         beendenRef.current();
         return;
       }
@@ -143,19 +154,32 @@ export function SchuelerApp() {
     };
   }, [modus]);
 
-  const istQuiz = profil?.uebungsModus === 'quiz';
+  const istQuiz = gewaehlterModus === 'quiz';
 
-  function starten(): void {
-    const neueRunde = istQuiz ? baueQuizRunde(alleWoerter) : faellig;
-    if (!heute || neueRunde.length === 0) return;
+  /** Runde für die vom Kind gewählte Übungsart zusammenstellen (#18). */
+  function rundeFuer(typ: UebungsModus): ServerWort[] {
+    if (typ === 'quiz') return baueQuizRunde(alleWoerter);
+    if (typ === 'nomen') return faellig.filter((w) => istNomen(w));
+    return faellig;
+  }
+
+  function starten(typ: UebungsModus): void {
+    if (!heute || heute.capMet) return;
+    const neueRunde = rundeFuer(typ);
+    if (neueRunde.length === 0) return;
     uhrRef.current = erzeugeStoppuhr();
     uhrRef.current.start();
     wortStartRef.current = 0;
     eventsRef.current = [];
     zaehlerRef.current = { richtig: 0, zuUeben: 0 };
-    bonusRundeRef.current = heute.goalMet;
     beendetRef.current = false;
-    zielRef.current = { zielSekunden: heute.goalSeconds, sekundenHeute: heute.secondsToday };
+    zielRef.current = {
+      zielSekunden: heute.goalSeconds,
+      grenzeSekunden: heute.capSeconds,
+      sekundenHeute: heute.secondsToday,
+    };
+    setGewaehlterModus(typ);
+    if (profil) merkeGeuebteArt(profil.id, heuteDatum(), typ);
     setRunde(neueRunde);
     setIndex(0);
     setPhase('anschauen');
@@ -218,14 +242,17 @@ export function SchuelerApp() {
     return { fertig: false };
   }
 
-  /** Nächstes Wort — oder Runde beenden (Zeitziel/Wörter erschöpft). */
+  /** Nächstes Wort — oder Runde beenden (harte Grenze erreicht/Wörter erschöpft). */
   function weiterOderBeenden(): void {
     const uhr = uhrRef.current;
     if (!uhr || !heute) return;
     const naechster = index + 1;
-    const zielErreicht =
-      !bonusRundeRef.current && istZeitUm(heute.goalSeconds, heute.secondsToday, uhr.aktiveMs());
-    if (zielErreicht || naechster >= runde.length) {
+    const grenzeErreicht = istZeitUm(
+      zielRef.current.grenzeSekunden,
+      zielRef.current.sekundenHeute,
+      uhr.aktiveMs(),
+    );
+    if (grenzeErreicht || naechster >= runde.length) {
       void beenden();
       return;
     }
@@ -251,10 +278,14 @@ export function SchuelerApp() {
     if (!fertig) weiterOderBeenden();
   }
 
+  // Countdown zeigt die Zeit bis zum Tagesziel; ist es erreicht, läuft die
+  // Übung als „Bonus" bis zur harten Grenze weiter (Badge statt ⏱).
   const aktuelleRestSekunden =
     heute && uhrRef.current
       ? restSekunden(heute.goalSeconds, heute.secondsToday, uhrRef.current.aktiveMs())
       : 0;
+  const zielErreicht = aktuelleRestSekunden <= 0;
+  const geuebtHeute = profil ? heuteGeuebteArten(profil.id, heuteDatum()) : new Set<UebungsModus>();
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-paper-100">
@@ -285,8 +316,11 @@ export function SchuelerApp() {
         {modus === 'start' && heute && (
           <Startkarte
             heute={heute}
-            anzahl={istQuiz ? Math.min(alleWoerter.length, 20) : faellig.length}
-            uebungsModus={profil?.uebungsModus ?? 'alle'}
+            anzahlAlle={faellig.length}
+            anzahlNomen={faellig.filter((w) => istNomen(w)).length}
+            anzahlQuiz={Math.min(alleWoerter.length, 20)}
+            geuebtHeute={geuebtHeute}
+            vorschlag={naechsterArtVorschlag(geuebtHeute)}
             onStart={starten}
           />
         )}
@@ -296,8 +330,8 @@ export function SchuelerApp() {
             position={index + 1}
             gesamt={runde.length}
             restSekunden={aktuelleRestSekunden}
-            bonus={bonusRundeRef.current}
-            nurNomen={profil?.uebungsModus === 'nomen'}
+            bonus={zielErreicht}
+            nurNomen={gewaehlterModus === 'nomen'}
             phase={phase}
             onAbdecken={() => setPhase('schreiben')}
             onAufdecken={() => setPhase('pruefen')}
@@ -310,7 +344,7 @@ export function SchuelerApp() {
             position={index + 1}
             gesamt={runde.length}
             restSekunden={aktuelleRestSekunden}
-            bonus={bonusRundeRef.current}
+            bonus={zielErreicht}
             phase={quizPhase}
             korrekt={quizKorrekt}
             onAntwort={quizBeantworten}
@@ -402,35 +436,48 @@ function Anmeldekarte({ onAngemeldet }: { onAngemeldet: (p: ServerSchueler) => P
   );
 }
 
+/** Eine wählbare Übung auf der Startkarte. */
+interface UebungsOption {
+  typ: UebungsModus;
+  symbol: string;
+  titel: string;
+  einheit: string;
+}
+
+const UEBUNGS_OPTIONEN: readonly UebungsOption[] = [
+  { typ: 'alle', symbol: '📚', titel: 'Wörter schreiben', einheit: 'Wörter dran' },
+  { typ: 'nomen', symbol: '🔠', titel: 'Groß & klein', einheit: 'Nomen dran' },
+  { typ: 'quiz', symbol: '🎲', titel: 'Groß-oder-klein-Quiz', einheit: 'Quiz-Wörter' },
+];
+
 function Startkarte({
   heute,
-  anzahl,
-  uebungsModus,
+  anzahlAlle,
+  anzahlNomen,
+  anzahlQuiz,
+  geuebtHeute,
+  vorschlag,
   onStart,
 }: {
   heute: HeuteStand;
-  anzahl: number;
-  uebungsModus: string;
-  onStart: () => void;
+  anzahlAlle: number;
+  anzahlNomen: number;
+  anzahlQuiz: number;
+  geuebtHeute: Set<UebungsModus>;
+  vorschlag: UebungsModus | null;
+  onStart: (typ: UebungsModus) => void;
 }) {
   const rest = Math.max(0, heute.goalSeconds - heute.secondsToday);
-  const istQuiz = uebungsModus === 'quiz';
+  const anzahlFuer = (typ: UebungsModus): number =>
+    typ === 'quiz' ? anzahlQuiz : typ === 'nomen' ? anzahlNomen : anzahlAlle;
+
   return (
     <div className="card p-6 text-center sm:p-8">
-      <p className="text-5xl">{heute.goalMet ? '🌟' : istQuiz ? '🎲' : '📚'}</p>
+      <p className="text-5xl">{heute.goalMet ? '🌟' : '📚'}</p>
       <h2 className="mt-3 font-serif text-xl font-semibold text-ink">
         {heute.goalMet ? 'Ziel für heute geschafft!' : 'Deine Schreibzeit'}
       </h2>
-      {uebungsModus === 'nomen' && (
-        <p className="mt-2 inline-block rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-600">
-          🔠 Großschreibung üben — heute nur Nomen
-        </p>
-      )}
-      {istQuiz && (
-        <p className="mt-2 inline-block rounded-full bg-brand-500/10 px-3 py-1 text-sm font-medium text-brand-600">
-          🎲 Groß-oder-klein-Quiz
-        </p>
-      )}
+
       <div className="mt-4 flex justify-center gap-6 text-sm text-ink-soft">
         <span>
           <span className="block text-2xl font-semibold text-ink">{formatZeit(heute.secondsToday)}</span>
@@ -440,22 +487,50 @@ function Startkarte({
           <span className="block text-2xl font-semibold text-brand-600">{formatZeit(rest)}</span>
           noch bis zum Ziel
         </span>
-        <span>
-          <span className="block text-2xl font-semibold text-accent-600">{anzahl}</span>
-          {istQuiz ? 'Quiz-Wörter' : 'Wörter dran'}
-        </span>
       </div>
 
-      {anzahl > 0 ? (
-        <button className="btn-primary mt-6 w-full py-3 text-base" onClick={onStart}>
-          {istQuiz ? '▶ Quiz starten' : '▶ Üben starten'}
-        </button>
-      ) : (
+      {heute.capMet ? (
         <p className="mt-6 text-sm text-ink-soft">
-          {istQuiz
-            ? 'Noch keine Wörter in deiner Kartei — frag deine Eltern. 🙂'
-            : 'Gerade ist kein Wort fällig — komm später wieder. 🎉'}
+          Für heute hast du genug geübt — super gemacht! Komm morgen wieder. 🌙
         </p>
+      ) : (
+        <>
+          <p className="mt-6 text-sm font-medium text-ink">Was möchtest du üben?</p>
+          {vorschlag && (
+            <p className="mt-1 text-xs text-accent-600">
+              Tipp: Misch es! Probier heute auch mal „
+              {UEBUNGS_OPTIONEN.find((o) => o.typ === vorschlag)?.titel}".
+            </p>
+          )}
+          <div className="mt-3 space-y-2">
+            {UEBUNGS_OPTIONEN.map((o) => {
+              const anzahl = anzahlFuer(o.typ);
+              const leer = anzahl === 0;
+              const schonGeuebt = geuebtHeute.has(o.typ);
+              return (
+                <button
+                  key={o.typ}
+                  className="btn-secondary flex w-full items-center justify-between py-3 text-base disabled:opacity-50"
+                  onClick={() => onStart(o.typ)}
+                  disabled={leer}
+                >
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden>{o.symbol}</span> {o.titel}
+                    {schonGeuebt && <span aria-label="heute schon geübt">✓</span>}
+                  </span>
+                  <span className="text-xs text-ink-faint">
+                    {leer ? 'nichts dran' : `${anzahl} ${o.einheit}`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {anzahlAlle === 0 && anzahlQuiz === 0 && (
+            <p className="mt-3 text-sm text-ink-soft">
+              Gerade ist kein Wort fällig — komm später wieder. 🎉
+            </p>
+          )}
+        </>
       )}
 
       <p className="mt-6 text-left text-xs leading-relaxed text-ink-faint">
