@@ -42,6 +42,7 @@ export function practiceRoutes(db: Database, config: Config) {
               correct: e.correct,
               durationMs: e.durationMs,
               practicedAt: e.practicedAt,
+              nurZeit: e.nurZeit,
             })),
             (body.art as PracticeArt | undefined) ?? 'schreiben',
           );
@@ -68,6 +69,7 @@ export function practiceRoutes(db: Database, config: Config) {
               correct: t.Boolean(),
               durationMs: t.Integer({ minimum: 0 }),
               practicedAt: t.Integer({ minimum: 0 }),
+              nurZeit: t.Optional(t.Boolean()),
             }),
             { minItems: 1 },
           ),

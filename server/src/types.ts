@@ -26,6 +26,13 @@ export const UEBUNGS_MODUS_VALUES: readonly UebungsModus[] = ['alle', 'nomen', '
 export type PracticeArt = 'schreiben' | 'quiz';
 export const PRACTICE_ART_VALUES: readonly PracticeArt[] = ['schreiben', 'quiz'];
 
+/**
+ * Gespeicherte Art einer Practice-Event-Zeile. Zusätzlich zu den Session-Arten
+ * gibt es 'zeit' (#17): reine Zeitgutschrift für ein angefangenes, aber nie
+ * bewertetes Wort beim Hard-Stop — zählt zur Übungszeit, ohne SRS/Statistik.
+ */
+export type StoredPracticeArt = PracticeArt | 'zeit';
+
 export interface FamilyRow {
   id: string;
   name: string | null;
@@ -91,8 +98,8 @@ export interface PracticeEventRow {
   /** 0 | 1. */
   correct: number;
   duration_ms: number;
-  /** 'schreiben' (SRS-wirksam) oder 'quiz' (nur Zeit/Statistik, #16). */
-  art: PracticeArt;
+  /** 'schreiben' (SRS-wirksam), 'quiz' (nur Zeit/Statistik, #16) oder 'zeit' (reine Zeitgutschrift, #17). */
+  art: StoredPracticeArt;
   fach_before: number | null;
   fach_after: number | null;
   practiced_at: number;

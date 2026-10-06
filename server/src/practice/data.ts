@@ -23,6 +23,11 @@ export interface PracticeEventInput {
   correct: boolean;
   durationMs: number;
   practicedAt: number;
+  /**
+   * Reine Zeitgutschrift (#17): ein angefangenes, aber nie bewertetes Wort beim
+   * Hard-Stop. Zählt zur Übungszeit, lässt SRS + Trefferstatistik unberührt.
+   */
+  nurZeit?: boolean;
 }
 
 export interface RecordResult {
@@ -84,8 +89,13 @@ export function recordSession(
         skipped += 1;
         continue;
       }
-      const fachNachher =
-        art === 'quiz' ? word.fach : naechsterStand(word.fach, ev.correct, ev.practicedAt).fach;
+      // 'zeit' (#17) ist eine reine Zeitgutschrift: wie 'quiz' SRS-neutral, aber
+      // zusätzlich aus der Trefferstatistik ausgenommen (siehe stats/data.ts).
+      const eventArt = ev.nurZeit ? 'zeit' : art;
+      const srsWirksam = eventArt === 'schreiben';
+      const fachNachher = srsWirksam
+        ? naechsterStand(word.fach, ev.correct, ev.practicedAt).fach
+        : word.fach;
       db.query(
         `INSERT INTO practice_events
            (id, kid_id, word_id, session_id, correct, duration_ms, art, fach_before, fach_after, practiced_at)
@@ -97,12 +107,12 @@ export function recordSession(
         sessionId,
         ev.correct ? 1 : 0,
         ev.durationMs,
-        art,
+        eventArt,
         word.fach,
         fachNachher,
         ev.practicedAt,
       );
-      if (art === 'schreiben') {
+      if (srsWirksam) {
         const next = naechsterStand(word.fach, ev.correct, ev.practicedAt);
         db.query(
           'UPDATE words SET fach = ?, faellig_am = ?, status = ?, updated_at = ? WHERE id = ?;',
