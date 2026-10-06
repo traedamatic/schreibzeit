@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-// Übungslink-Modal: Übungsmodus-Auswahl (#15) — lädt den aktuellen Modus vom
-// Server und speichert Änderungen per PUT.
+// Übungslink-Modal (#18): kein Übungsmodus-Selektor mehr (das Kind wählt die
+// Übung selbst); stattdessen setzt der Admin Tagesziel + harte Obergrenze.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { UebungslinkModal } from '@/components/UebungslinkModal';
@@ -15,13 +15,14 @@ const kind: Kind = {
   geaendertAm: 0,
 };
 
-const serverKind = (uebungsModus: string) => ({
+const serverKind = () => ({
   id: 'k1',
   name: 'Lina',
   lernstand: 'klasse2',
   notiz: null,
   dailyGoalSeconds: 300,
-  uebungsModus,
+  dailyCapSeconds: 600,
+  uebungsModus: 'alle',
   createdAt: 0,
   updatedAt: 0,
 });
@@ -43,8 +44,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('UebungslinkModal Übungsmodus (#15)', () => {
-  it('lädt den aktuellen Modus und speichert eine Änderung per PUT', async () => {
+describe('UebungslinkModal (#18)', () => {
+  it('lädt Ziel + Grenze (in Minuten) und speichert Änderungen per PUT', async () => {
     const aufrufe: { url: string; method: string; body?: unknown }[] = [];
     vi.stubGlobal(
       'fetch',
@@ -55,8 +56,7 @@ describe('UebungslinkModal Übungsmodus (#15)', () => {
           method,
           body: init?.body ? JSON.parse(String(init.body)) : undefined,
         });
-        if (method === 'GET') return Promise.resolve(jsonResponse(serverKind('alle')));
-        return Promise.resolve(jsonResponse(serverKind('nomen')));
+        return Promise.resolve(jsonResponse(serverKind()));
       }),
     );
 
@@ -70,17 +70,35 @@ describe('UebungslinkModal Übungsmodus (#15)', () => {
       />,
     );
 
-    const select = (await screen.findByLabelText('Übungsmodus')) as HTMLSelectElement;
-    await waitFor(() => expect(select.disabled).toBe(false));
-    expect(select.value).toBe('alle');
+    // 300 s / 600 s → 5 / 10 Minuten vorbefüllt.
+    const ziel = (await screen.findByLabelText('Ziel (min)')) as HTMLInputElement;
+    const grenze = screen.getByLabelText('Grenze (min)') as HTMLInputElement;
+    await waitFor(() => expect(ziel.value).toBe('5'));
+    expect(grenze.value).toBe('10');
 
-    fireEvent.change(select, { target: { value: 'nomen' } });
+    fireEvent.change(ziel, { target: { value: '6' } });
+    fireEvent.change(grenze, { target: { value: '12' } });
+    fireEvent.click(screen.getByText('Speichern'));
 
     await waitFor(() => {
       const put = aufrufe.find((a) => a.method === 'PUT' && a.url.includes('/kids/k1'));
-      expect(put?.body).toEqual({ uebungsModus: 'nomen' });
+      expect(put?.body).toEqual({ dailyGoalSeconds: 360, dailyCapSeconds: 720 });
     });
-    expect(screen.getByText(/Nomen schreibt man groß/)).toBeTruthy();
+  });
+
+  it('kein Übungsmodus-Selektor mehr — das Kind wählt selbst', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(jsonResponse(serverKind()))));
+    render(
+      <UebungslinkModal
+        offen
+        kind={kind}
+        woerter={[]}
+        einstellungen={DEFAULT_EINSTELLUNGEN}
+        onClose={() => {}}
+      />,
+    );
+    await screen.findByLabelText('Ziel (min)');
+    expect(screen.queryByLabelText('Übungsmodus')).toBeNull();
   });
 
   it('ohne Server: erklärender Hinweis statt Formular', () => {

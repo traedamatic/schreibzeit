@@ -7,15 +7,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { Modal } from './ui';
 import { IconCheck, IconCopy, IconLink } from './icons';
 import { baueSchuelerLink } from '@/core/uebenLink';
-import { ApiError, istRemoteAktiv, kidsApi, type UebungsModus } from '@/services/api';
+import { ApiError, istRemoteAktiv, kidsApi } from '@/services/api';
 import { displayName } from '@/state/store';
 import type { Einstellungen, Kind, Lernwort } from '@/types';
 
-const MODUS_OPTIONEN: { wert: UebungsModus; label: string }[] = [
-  { wert: 'alle', label: 'Alle Wörter' },
-  { wert: 'nomen', label: 'Nur Nomen (Großschreibung)' },
-  { wert: 'quiz', label: 'Groß/klein-Quiz' },
-];
+/** Minuten-Grenzen für Tagesziel/-obergrenze (das Kind übt 5–10 min/Tag). */
+const ZIEL_MIN = 1;
+const ZIEL_MAX = 30;
+const GRENZE_MAX = 60;
 
 export function UebungslinkModal({
   offen,
@@ -33,39 +32,49 @@ export function UebungslinkModal({
   const [kopiert, setKopiert] = useState(false);
   const [pin, setPin] = useState('');
   const [pinStatus, setPinStatus] = useState<'leer' | 'sendet' | 'ok' | string>('leer');
-  const [modus, setModus] = useState<UebungsModus | null>(null);
-  const [modusFehler, setModusFehler] = useState<string | null>(null);
+  // Tagesziel + harte Obergrenze pro Kind, in Minuten (#18).
+  const [zielMin, setZielMin] = useState<number | null>(null);
+  const [grenzeMin, setGrenzeMin] = useState<number | null>(null);
+  const [zeitStatus, setZeitStatus] = useState<'leer' | 'sendet' | 'ok' | string>('leer');
 
   const link = useMemo(() => baueSchuelerLink(), []);
   const anzeigename = displayName(kind.name, einstellungen.nurInitialen);
 
-  // Aktuellen Übungsmodus vom Server laden (#15).
+  // Tagesziel + Obergrenze vom Server laden (#18).
   useEffect(() => {
     if (!offen || !istRemoteAktiv()) return;
     let aktiv = true;
     kidsApi
       .get(kind.id)
       .then((k) => {
-        if (aktiv) setModus(k.uebungsModus);
+        if (!aktiv) return;
+        setZielMin(Math.round(k.dailyGoalSeconds / 60));
+        setGrenzeMin(Math.round(k.dailyCapSeconds / 60));
       })
       .catch(() => {
-        if (aktiv) setModusFehler('Übungsmodus konnte nicht geladen werden.');
+        if (aktiv) setZeitStatus('Zeiteinstellungen konnten nicht geladen werden.');
       });
     return () => {
       aktiv = false;
     };
   }, [offen, kind.id]);
 
-  async function modusSpeichern(neu: UebungsModus) {
-    const vorher = modus;
-    setModus(neu);
-    setModusFehler(null);
+  async function zeitSpeichern() {
+    if (zielMin === null || grenzeMin === null) return;
+    if (grenzeMin < zielMin) {
+      setZeitStatus('Die Obergrenze darf nicht kleiner als das Ziel sein.');
+      return;
+    }
+    setZeitStatus('sendet');
     try {
-      await kidsApi.update(kind.id, { uebungsModus: neu });
+      await kidsApi.update(kind.id, {
+        dailyGoalSeconds: zielMin * 60,
+        dailyCapSeconds: grenzeMin * 60,
+      });
+      setZeitStatus('ok');
     } catch (error) {
-      setModus(vorher);
-      setModusFehler(
-        error instanceof ApiError ? error.message : 'Übungsmodus konnte nicht gespeichert werden.',
+      setZeitStatus(
+        error instanceof ApiError ? error.message : 'Zeiteinstellungen konnten nicht gespeichert werden.',
       );
     }
   }
@@ -141,33 +150,61 @@ export function UebungslinkModal({
         </div>
 
         <div>
-          <label className="label" htmlFor="ueben-modus">
-            Übungsmodus
-          </label>
-          <select
-            id="ueben-modus"
-            className="input max-w-xs"
-            value={modus ?? 'alle'}
-            disabled={modus === null}
-            onChange={(e) => void modusSpeichern(e.target.value as UebungsModus)}
-          >
-            {MODUS_OPTIONEN.map((o) => (
-              <option key={o.wert} value={o.wert}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          {modusFehler && <p className="mt-1 text-xs text-red-600">{modusFehler}</p>}
-          {modus === 'nomen' && (
-            <p className="mt-1 text-xs text-ink-faint">
-              Das Kind übt nur Nomen — Merksatz „Nomen schreibt man groß!" wird angezeigt.
-            </p>
+          <label className="label">Übungszeit pro Tag</label>
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="mb-1 block text-xs text-ink-faint" htmlFor="ueben-ziel">
+                Ziel (min)
+              </label>
+              <input
+                id="ueben-ziel"
+                className="input w-24"
+                type="number"
+                min={ZIEL_MIN}
+                max={ZIEL_MAX}
+                value={zielMin ?? ''}
+                disabled={zielMin === null}
+                onChange={(e) => {
+                  setZielMin(e.target.value === '' ? null : Number(e.target.value));
+                  setZeitStatus('leer');
+                }}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs text-ink-faint" htmlFor="ueben-grenze">
+                Grenze (min)
+              </label>
+              <input
+                id="ueben-grenze"
+                className="input w-24"
+                type="number"
+                min={ZIEL_MIN}
+                max={GRENZE_MAX}
+                value={grenzeMin ?? ''}
+                disabled={grenzeMin === null}
+                onChange={(e) => {
+                  setGrenzeMin(e.target.value === '' ? null : Number(e.target.value));
+                  setZeitStatus('leer');
+                }}
+              />
+            </div>
+            <button
+              className="btn-secondary shrink-0"
+              onClick={() => void zeitSpeichern()}
+              disabled={zielMin === null || grenzeMin === null || zeitStatus === 'sendet'}
+            >
+              Speichern
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-ink-faint">
+            Beim Ziel (z. B. 5 min) gibt es die „geschafft"-Belohnung; bei der Grenze (z. B. 10 min)
+            stoppt die Übung. Welche Übung — Wörter, Groß/klein oder Quiz — wählt das Kind selbst.
+          </p>
+          {zeitStatus === 'ok' && (
+            <p className="mt-1 text-xs text-accent-600">Zeiteinstellungen gespeichert.</p>
           )}
-          {modus === 'quiz' && (
-            <p className="mt-1 text-xs text-ink-faint">
-              „Groß oder klein?"-Quiz über die ganze Kartei. Die Zeit zählt zum Tagesziel; der
-              Karteikasten-Fortschritt (Fächer) bleibt unberührt.
-            </p>
+          {zeitStatus !== 'leer' && zeitStatus !== 'ok' && zeitStatus !== 'sendet' && (
+            <p className="mt-1 text-xs text-red-600">{zeitStatus}</p>
           )}
         </div>
 
