@@ -7,6 +7,7 @@ import {
   formatZeit,
   istNomen,
   istZeitUm,
+  offeneZeitErfassen,
   restSekunden,
   sessionAnhaengen,
   wartendeAbspielen,
@@ -14,6 +15,7 @@ import {
   type QuizWort,
   type WartendeSession,
 } from '@/schueler/uebung';
+import type { UebungsEreignis } from '@/services/api';
 
 describe('Zeitziel', () => {
   it('restSekunden zählt Tagesstand und laufende Session zusammen', () => {
@@ -31,6 +33,47 @@ describe('Zeitziel', () => {
     expect(formatZeit(0)).toBe('0:00');
     expect(formatZeit(65)).toBe('1:05');
     expect(formatZeit(300)).toBe('5:00');
+  });
+});
+
+describe('offeneZeitErfassen (Restzeit-Gutschrift #17)', () => {
+  const ereignis = (wordId: string, durationMs: number): UebungsEreignis => ({
+    wordId,
+    correct: true,
+    durationMs,
+    practicedAt: 0,
+  });
+
+  it('schreibt dem laufenden Wort die nicht erfasste aktive Zeit gut', () => {
+    // 20 s aktiv, 7 s bereits in w1 erfasst → 13 s offen für das laufende w2.
+    const gut = offeneZeitErfassen(20_000, [ereignis('w1', 7000)], { id: 'w2' }, 123);
+    expect(gut).toEqual({
+      wordId: 'w2',
+      correct: false,
+      durationMs: 13_000,
+      practicedAt: 123,
+      nurZeit: true,
+    });
+  });
+
+  it('gilt auch, wenn noch kein Wort bewertet wurde (Hard-Stop im ersten Wort)', () => {
+    const gut = offeneZeitErfassen(3000, [], { id: 'w1' }, 5);
+    expect(gut?.durationMs).toBe(3000);
+    expect(gut?.nurZeit).toBe(true);
+  });
+
+  it('liefert null, wenn die Restzeit unter einer Sekunde liegt (normaler Abschluss)', () => {
+    expect(offeneZeitErfassen(20_040, [ereignis('w1', 20_000)], { id: 'w1' }, 0)).toBeNull();
+  });
+
+  it('liefert null, wenn das laufende Wort bereits ein Ereignis hat', () => {
+    // Verhindert eine (session_id, word_id)-Kollision — der Server würde es sonst
+    // verwerfen und die Zeit ginge verloren.
+    expect(offeneZeitErfassen(30_000, [ereignis('w1', 10_000)], { id: 'w1' }, 0)).toBeNull();
+  });
+
+  it('liefert null ohne laufendes Wort', () => {
+    expect(offeneZeitErfassen(30_000, [], undefined, 0)).toBeNull();
   });
 });
 

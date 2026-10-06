@@ -22,6 +22,44 @@ export function istZeitUm(zielSekunden: number, sekundenHeute: number, aktiveMs:
   return restSekunden(zielSekunden, sekundenHeute, aktiveMs) <= 0;
 }
 
+/** Mindestens so viel nicht erfasste Zeit (ms), bevor eine Gutschrift lohnt. */
+const ZEIT_GUTSCHRIFT_SCHWELLE_MS = 1000;
+
+/**
+ * Nicht erfasste aktive Zeit als reines Zeit-Ereignis (#17).
+ *
+ * Der Countdown zählt die reale aktive Zeit (`aktiveMs`), aber ein Wort wird
+ * erst beim Bewerten als Ereignis erfasst. Endet die Runde mitten in einem noch
+ * nicht bewerteten Wort (Hard-Stop bei 0:00), fehlt dem Server genau diese
+ * Restzeit — der Tagesstand bliebe hinter dem zurück, was der Countdown anzeigte,
+ * und „noch bis zum Ziel" spränge wieder hoch. Diese Funktion schreibt die
+ * Differenz (aktive Zeit minus bereits erfasste Dauer) dem laufenden Wort als
+ * `nurZeit`-Ereignis gut, ohne SRS/Statistik zu verändern.
+ *
+ * Gibt `null` zurück, wenn es kein laufendes Wort gibt, das Wort schon ein
+ * Ereignis hat oder die Restzeit unter der Sekunden-Schwelle liegt (der Server
+ * rundet ohnehin auf Sekunden).
+ */
+export function offeneZeitErfassen(
+  aktiveMs: number,
+  erfasst: UebungsEreignis[],
+  laufendesWort: { id: string } | undefined,
+  jetzt: number,
+): UebungsEreignis | null {
+  if (!laufendesWort) return null;
+  if (erfasst.some((e) => e.wordId === laufendesWort.id)) return null;
+  const erfassteMs = erfasst.reduce((summe, e) => summe + e.durationMs, 0);
+  const restMs = Math.round(aktiveMs - erfassteMs);
+  if (restMs < ZEIT_GUTSCHRIFT_SCHWELLE_MS) return null;
+  return {
+    wordId: laufendesWort.id,
+    correct: false,
+    durationMs: restMs,
+    practicedAt: jetzt,
+    nurZeit: true,
+  };
+}
+
 /** Sekunden als "M:SS" für die Countdown-Anzeige. */
 export function formatZeit(sekunden: number): string {
   const s = Math.max(0, Math.floor(sekunden));
