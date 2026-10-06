@@ -55,7 +55,12 @@ export interface KidRow {
   notiz: string | null;
   /** Daily practice time goal in seconds (default 300 = 5 min). */
   daily_goal_seconds: number;
-  /** Übungsart (#15): 'alle' | 'nomen'. */
+  /** Harte Tagesobergrenze in Sekunden (#18, default 600 = 10 min). */
+  daily_cap_seconds: number;
+  /**
+   * Übungsart (#15). Seit #18 wählt das Kind die Übung pro Session selbst; dieses
+   * Feld bleibt für Abwärtskompatibilität erhalten, steuert aber nichts mehr.
+   */
   uebungs_modus: UebungsModus;
   pin_failed_count: number;
   pin_locked_until: number | null;

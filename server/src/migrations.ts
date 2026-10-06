@@ -111,12 +111,18 @@ const UEBUNGS_MODUS = `ALTER TABLE kids ADD COLUMN uebungs_modus TEXT NOT NULL D
 // Art des Practice-Events (#16): Schreibübung (SRS) vs. Groß/klein-Quiz.
 const EVENT_ART = `ALTER TABLE practice_events ADD COLUMN art TEXT NOT NULL DEFAULT 'schreiben';`;
 
+// Tägliche Obergrenze pro Kind (#18): die Übung stoppt hart bei dieser Zeit
+// (Default 600 s = 10 min). Das Tagesziel (daily_goal_seconds, 5 min) bleibt der
+// „geschafft"-Schwellenwert; dazwischen darf weitergeübt werden.
+const DAILY_CAP = `ALTER TABLE kids ADD COLUMN daily_cap_seconds INTEGER NOT NULL DEFAULT 600;`;
+
 export const migrations: readonly Migration[] = [
   { id: 1, name: 'init', up: INIT },
   { id: 2, name: 'kid_notiz', up: KID_NOTIZ },
   { id: 3, name: 'families', up: FAMILIES },
   { id: 4, name: 'uebungs_modus', up: UEBUNGS_MODUS },
   { id: 5, name: 'event_art', up: EVENT_ART },
+  { id: 6, name: 'daily_cap', up: DAILY_CAP },
 ];
 
 function userVersion(db: Database): number {

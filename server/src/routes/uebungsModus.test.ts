@@ -1,6 +1,7 @@
-// Übungsmodus „Nur Nomen" (#15): Admin setzt den Modus, der Due-Filter
-// liefert dann ausschließlich Nomen (Artikel oder wortart), das Kind-Profil
-// trägt den Modus.
+// Übungsmodus (#15/#18): Der gespeicherte Modus bleibt als Feld erhalten
+// (Abwärtskompatibilität), steuert aber den Due-Filter nicht mehr — seit #18
+// liefert /practice/due immer alle fälligen Wörter; die Wahl der Übung trifft
+// das Kind clientseitig pro Session.
 import { describe, expect, it } from 'bun:test';
 import { createApp } from '../app';
 import { openDatabase } from '../db';
@@ -61,7 +62,7 @@ describe('Übungsmodus „Nur Nomen" (#15)', () => {
     expect(ungueltig.status).toBe(400);
   });
 
-  it('due liefert im Modus "nomen" nur Nomen (Artikel ODER wortart), sonst alles', async () => {
+  it('due liefert immer alle fälligen Wörter — auch bei gespeichertem Modus "nomen" (#18)', async () => {
     const { app, adminCookie, kidId, addWord } = await setup();
     await addWord('Apfel', { artikel: 'der' }); // Nomen via Artikel
     await addWord('Fahrrad', { wortart: 'Nomen' }); // Nomen via wortart
@@ -74,13 +75,15 @@ describe('Übungsmodus „Nur Nomen" (#15)', () => {
       'laufen',
     ]);
 
+    // Gespeicherter Modus darf das Kind nicht mehr einschränken: Alle bleiben fällig.
     await app.handle(req('PUT', `/api/kids/${kidId}`, { uebungsModus: 'nomen' }, adminCookie));
-    const nurNomen = await app.handle(
+    const trotzNomen = await app.handle(
       req('GET', `/api/kids/${kidId}/practice/due`, undefined, adminCookie),
     );
-    expect(((await nurNomen.json()) as { wort: string }[]).map((w) => w.wort).sort()).toEqual([
+    expect(((await trotzNomen.json()) as { wort: string }[]).map((w) => w.wort).sort()).toEqual([
       'Apfel',
       'Fahrrad',
+      'laufen',
     ]);
   });
 

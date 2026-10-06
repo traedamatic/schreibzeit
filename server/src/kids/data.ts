@@ -22,6 +22,7 @@ export interface UpdateKidInput {
   lernstand?: Lernstand;
   notiz?: string | null;
   dailyGoalSeconds?: number;
+  dailyCapSeconds?: number;
   uebungsModus?: UebungsModus;
 }
 
@@ -78,10 +79,11 @@ export function updateKid(db: Database, id: string, patch: UpdateKidInput): KidR
   const lernstand = patch.lernstand ?? kid.lernstand;
   const notiz = patch.notiz !== undefined ? patch.notiz : kid.notiz;
   const goal = patch.dailyGoalSeconds ?? kid.daily_goal_seconds;
+  const cap = patch.dailyCapSeconds ?? kid.daily_cap_seconds;
   const modus = patch.uebungsModus ?? kid.uebungs_modus;
   db.query(
-    'UPDATE kids SET name = ?, lernstand = ?, notiz = ?, daily_goal_seconds = ?, uebungs_modus = ?, updated_at = ? WHERE id = ?;',
-  ).run(name, lernstand, notiz, goal, modus, now(), id);
+    'UPDATE kids SET name = ?, lernstand = ?, notiz = ?, daily_goal_seconds = ?, daily_cap_seconds = ?, uebungs_modus = ?, updated_at = ? WHERE id = ?;',
+  ).run(name, lernstand, notiz, goal, cap, modus, now(), id);
   return getKidById(db, id);
 }
 
